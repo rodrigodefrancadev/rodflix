@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model CatalogItem {
+  id          String   @id @default(uuid())
+  title       String
+  type        ItemType
+  folderId    String   @unique
+  posterUrl   String?
+  bannerUrl   String?
+  description String?
+  fileUrl     String?  // If type == FILM, this stores the direct video reference
+  
+  seasons     Season[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ItemType {
+  FILM
+  SERIES
+}
+
+model Season {
+  id             String   @id @default(uuid())
+  number         Int
+  title          String?
+  folderId       String   @unique
+  catalogItemId  String
+  catalogItem    CatalogItem @relation(fields: [catalogItemId], references: [id])
+  
+  episodes       Episode[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Episode {
+  id        String   @id @default(uuid())
+  number    Int
+  title     String?
+  fileUrl   String
+  duration  Int?
+  
+  seasonId  String
+  season    Season   @relation(fields: [seasonId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
