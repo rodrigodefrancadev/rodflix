@@ -2,6 +2,7 @@ import type { ICatalogRepository } from '../../domain/repositories/ICatalogRepos
 import type { IDriveService } from '../../domain/services/IDriveService';
 import type { Catalog, CatalogItem } from '../../domain/entities/Catalog';
 import { MetadataService, type ExternalMetadata } from '../../infrastructure/services/MetadataService';
+import { syncLogService } from '../../infrastructure/services/SyncLogService';
 
 interface SyncCatalogInput {
   rootFolderId: string;
@@ -21,45 +22,65 @@ export class SyncCatalogFromDriveUseCase {
   ) {}
 
   async execute(input: SyncCatalogInput): Promise<SyncCatalogOutput> {
-    // 1. Read the full folder structure from Drive
-    const rawItems = await this.driveService.buildCatalog(input.rootFolderId);
+    syncLogService.log('Iniciando sincronização do catálogo...', 'info');
+    
+    // 0. Load existing catalog to use as local metadata cache
+    const existingCatalog = await this.catalogRepository.findLatest();
+    const dbCache = new Map<string, any>();
+    existingCatalog?.items.forEach(item => {
+      if (item.tmdbRaw) {
+        dbCache.set(item.driveFolderId, item.tmdbRaw);
+      }
+    });
 
-    // 2. For every new title (no .id marker yet), write the marker back to Drive
-    //    so future syncs reuse the same UUID.
-    let newItems = 0;
+    // 1. Read the full folder structure from Drive
+    syncLogService.log('Escaneando pastas no Google Drive...', 'info');
+    const rawItems = await this.driveService.buildCatalog(input.rootFolderId);
+    syncLogService.log(`Escaneamento concluído. ${rawItems.length} títulos encontrados.`, 'success');
+
+    // 2. Process each item
+    let newItemsCount = 0;
     const items: CatalogItem[] = [];
 
-    for (const item of rawItems) {
+    for (let i = 0; i < rawItems.length; i++) {
+      const item = rawItems[i];
+      const progress = `[${i + 1}/${rawItems.length}]`;
+      
+      syncLogService.log(`${progress} Processando: "${item.title}"...`, 'info');
+      
       let metadata: ExternalMetadata | null = null;
+      let tmdbRaw: any = null;
 
-      // 1. Try to read from tmdb.json if it exists
-      if (item.tmdbFileId) {
+      // 1. Try to read from DB cache
+      const cachedRawInDb = dbCache.get(item.driveFolderId);
+      if (cachedRawInDb) {
+        syncLogService.log(`${progress} Usando metadados em cache (Banco de Dados).`, 'success');
+        tmdbRaw = cachedRawInDb;
+        metadata = this.metadataService.mapExternalMetadata(tmdbRaw, item.kind);
+      }
+
+      // 2. Fallback: Try to read from tmdb.json on Drive (if present)
+      if (!metadata && item.tmdbFileId) {
         try {
-          console.log(`[Sync] Reading cached metadata from tmdb.json for "${item.title}"`);
-          const cachedRaw = await this.driveService.readFileContent(item.tmdbFileId);
-          const rawData = JSON.parse(cachedRaw);
-          metadata = this.metadataService.mapExternalMetadata(rawData, item.kind);
+          syncLogService.log(`${progress} Usando metadados em cache (Drive: tmdb.json).`, 'success');
+          const cachedRawOnDrive = await this.driveService.readFileContent(item.tmdbFileId);
+          tmdbRaw = JSON.parse(cachedRawOnDrive);
+          metadata = this.metadataService.mapExternalMetadata(tmdbRaw, item.kind);
         } catch (err) {
-          console.warn(`[Sync] Error reading tmdb.json for "${item.title}", will fetch from TMDB:`, err);
+          syncLogService.log(`${progress} Erro ao ler tmdb.json no Drive.`, 'warn');
         }
       }
 
-      // 2. If no cache, fetch from TMDB
+      // 3. Fallback: Fetch from TMDB
       if (!metadata) {
+        syncLogService.log(`${progress} Buscando metadados no TMDB para "${item.title}"...`, 'info');
         const result = await this.metadataService.getMetadata(item.title, item.kind);
         if (result) {
           metadata = result.mapped;
-          // Save back to Drive
-          try {
-            console.log(`[Sync] Saving metadata to tmdb.json for "${item.title}"`);
-            await this.driveService.writeFileContent(
-              item.driveFolderId, 
-              'tmdb.json', 
-              JSON.stringify(result.raw, null, 2)
-            );
-          } catch (err) {
-            console.error(`[Sync] Error saving tmdb.json for "${item.title}":`, err);
-          }
+          tmdbRaw = result.raw;
+          syncLogService.log(`${progress} Metadados encontrados no TMDB.`, 'success');
+        } else {
+          syncLogService.log(`${progress} Nenhum metadado encontrado no TMDB para "${item.title}".`, 'warn');
         }
       }
       
@@ -69,14 +90,16 @@ export class SyncCatalogFromDriveUseCase {
         bannerUrl: metadata?.bannerUrl,
         description: metadata?.description,
         year: metadata?.year || item.year, // prefer TMDb year if found
+        tmdbRaw: tmdbRaw, // Persist back to DB
       };
 
       if (!enrichedItem.existingId) {
         const { randomUUID } = await import('crypto');
         const uuid = randomUUID();
+        syncLogService.log(`${progress} Novo título detectado. Gerando ID e gravando marcador...`, 'info');
         await this.driveService.writeIdMarker(enrichedItem.driveFolderId, uuid);
         items.push({ ...enrichedItem, existingId: uuid });
-        newItems++;
+        newItemsCount++;
       } else {
         items.push(enrichedItem);
       }
@@ -89,8 +112,12 @@ export class SyncCatalogFromDriveUseCase {
     };
 
     // 4. Persist to database
+    syncLogService.log('Persistindo catálogo no banco de dados...', 'info');
     await this.catalogRepository.save(catalog);
+    syncLogService.log('Catálogo salvo com sucesso!', 'success');
 
-    return { catalog, itemCount: items.length, newItems };
+    syncLogService.log(`Sincronização finalizada: ${items.length} itens processados (${newItemsCount} novos).`, 'success');
+
+    return { catalog, itemCount: items.length, newItems: newItemsCount };
   }
 }

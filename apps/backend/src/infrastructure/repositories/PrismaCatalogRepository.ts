@@ -25,6 +25,7 @@ export class PrismaCatalogRepository implements ICatalogRepository {
               posterUrl: item.posterUrl ?? null,
               bannerUrl: item.bannerUrl ?? null,
               description: item.description ?? null,
+              tmdbRaw: item.tmdbRaw ?? null,
             },
           });
         } else {
@@ -39,6 +40,7 @@ export class PrismaCatalogRepository implements ICatalogRepository {
               posterUrl: item.posterUrl ?? null,
               bannerUrl: item.bannerUrl ?? null,
               description: item.description ?? null,
+              tmdbRaw: item.tmdbRaw ?? null,
               seasons: {
                 create: item.seasons.map((season) => ({
                   number: season.number,
@@ -84,6 +86,7 @@ export class PrismaCatalogRepository implements ICatalogRepository {
         posterUrl: dbItem.posterUrl ?? undefined,
         bannerUrl: dbItem.bannerUrl ?? undefined,
         description: dbItem.description ?? undefined,
+        tmdbRaw: dbItem.tmdbRaw ?? undefined,
       };
 
       if (dbItem.type === 'FILM') {

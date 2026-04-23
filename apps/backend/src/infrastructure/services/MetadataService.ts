@@ -38,10 +38,26 @@ export class MetadataService {
         return null;
       }
 
-      console.log(`[MetadataService] Found result: ${result.title || result.name}`);
+      console.log(`[MetadataService] Found result: ${result.title || result.name} (id: ${result.id})`);
+
+      // Fetch full details with credits, genres and runtime
+      const detailEndpoint = type === 'film' ? `/movie/${result.id}` : `/tv/${result.id}`;
+      const detailResponse = await axios.get(`${this.baseUrl}${detailEndpoint}`, {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          accept: 'application/json',
+        },
+        params: {
+          language: 'pt-BR',
+          append_to_response: type === 'film' ? 'credits,release_dates' : 'credits,content_ratings',
+        },
+      });
+
+      const fullResult = { ...result, ...detailResponse.data };
+
       return {
-        mapped: this.mapExternalMetadata(result, type),
-        raw: result,
+        mapped: this.mapExternalMetadata(fullResult, type),
+        raw: fullResult,
       };
     } catch (error: any) {
       console.error(`[MetadataService] Error fetching metadata for ${title}:`, error?.response?.data || error.message);

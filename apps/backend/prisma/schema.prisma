@@ -19,6 +19,8 @@ model User {
   approved  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  watched   WatchedItem[]
 }
 
 enum Role {
@@ -37,6 +39,7 @@ model CatalogItem {
   bannerUrl   String?
   description String?
   fileUrl     String?  // If type == FILM, direct video Drive file ID
+  tmdbRaw     Json?    // Cached TMDB API response
   
   seasons     Season[]
   
@@ -75,4 +78,21 @@ model Episode {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WatchedItem {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// For films: catalogItemId. For episodes: the Google Drive file ID.
+  refId     String
+  kind      WatchedKind
+  watchedAt DateTime    @default(now())
+
+  @@unique([userId, refId])
+}
+
+enum WatchedKind {
+  FILM
+  EPISODE
 }

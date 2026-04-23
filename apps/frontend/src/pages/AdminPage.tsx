@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { adminApi } from '../api/admin';
 import type { User } from '../api/admin';
+import { Terminal, type LogEntry } from '../components/Terminal';
 
 export function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -22,6 +23,8 @@ export function AdminPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [syncStatus, setSyncStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [showTerminal, setShowTerminal] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -58,9 +61,32 @@ export function AdminPage() {
   };
 
   const handleSync = async () => {
+    let eventSource: EventSource | null = null;
     try {
       setIsSyncing(true);
       setSyncStatus(null);
+      setLogs([]);
+      setShowTerminal(true);
+
+      // Conecta ao stream de logs
+      const token = localStorage.getItem('rodflix_token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3333';
+      eventSource = new EventSource(`${apiUrl}/api/admin/sync/logs?token=${token}`);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const log = JSON.parse(event.data);
+          setLogs(prev => [...prev, log]);
+        } catch (e) {
+          console.error('Error parsing log data', e);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('EventSource error', err);
+        eventSource?.close();
+      };
+
       const result = await adminApi.syncCatalog();
       setSyncStatus({ 
         message: `Sincronização concluída! ${result.itemCount} itens processados (${result.newItems} novos).`, 
@@ -71,8 +97,17 @@ export function AdminPage() {
         message: `Erro na sincronização: ${error.response?.data?.error || error.message}`, 
         type: 'error' 
       });
+      setLogs(prev => [...prev, {
+        message: `ERRO FATAL: ${error.response?.data?.error || error.message}`,
+        type: 'error',
+        timestamp: new Date().toISOString()
+      }]);
     } finally {
       setIsSyncing(false);
+      // Mantemos o terminal aberto por alguns segundos ou até o usuário fechar
+      setTimeout(() => {
+        eventSource?.close();
+      }, 2000);
     }
   };
 
@@ -262,6 +297,12 @@ export function AdminPage() {
           </div>
         </div>
       </main>
+
+      <Terminal 
+        isOpen={showTerminal} 
+        logs={logs} 
+        onClose={() => setShowTerminal(false)} 
+      />
     </div>
   );
 }

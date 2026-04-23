@@ -85,4 +85,24 @@ export class AdminController {
       }
     }
   }
+  /** GET /api/admin/sync/logs — Stream sync logs via SSE */
+  async streamSyncLogs(req: Request, res: Response): Promise<void> {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const { syncLogService } = await import('../../infrastructure/services/SyncLogService');
+
+    const logHandler = (log: any) => {
+      res.write(`data: ${JSON.stringify(log)}\n\n`);
+    };
+
+    syncLogService.on('log', logHandler);
+
+    req.on('close', () => {
+      syncLogService.off('log', logHandler);
+      res.end();
+    });
+  }
 }

@@ -34,6 +34,8 @@ interface CatalogItemBase {
   driveThumbnailUrl?: string;
   /** Google Drive file ID of the tmdb.json file, if present */
   tmdbFileId?: string;
+  /** Cached TMDB API response */
+  tmdbRaw?: any;
 }
 
 export interface Film extends CatalogItemBase {

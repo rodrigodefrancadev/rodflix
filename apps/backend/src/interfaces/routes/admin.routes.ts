@@ -12,5 +12,6 @@ router.get('/users', (req, res) => controller.listUsers(req, res));
 router.patch('/users/:id/approve', (req, res) => controller.approveUser(req, res));
 router.patch('/users/:id/block', (req, res) => controller.blockUser(req, res));
 router.patch('/users/:id/role', (req, res) => controller.setRole(req, res));
+router.get('/sync/logs', (req, res) => controller.streamSyncLogs(req, res));
 
 export { router as adminRoutes };

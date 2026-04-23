@@ -3,6 +3,7 @@ import cors from 'cors';
 import { authRoutes } from './interfaces/routes/auth.routes';
 import { catalogRoutes } from './interfaces/routes/catalog.routes';
 import { adminRoutes } from './interfaces/routes/admin.routes';
+import { watchedRoutes } from './interfaces/routes/watched.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3333;
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/watched', watchedRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Rodflix API is running' });

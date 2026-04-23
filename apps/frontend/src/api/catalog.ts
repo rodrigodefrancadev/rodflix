@@ -24,6 +24,10 @@ export type CatalogItem = {
   driveFolderId: string;
   year?: number;
   existingId: string; // The UUID in the database
+  posterUrl?: string;
+  bannerUrl?: string;
+  description?: string;
+  tmdbRaw?: any;
 } & (
   | { kind: 'film'; driveFileId: string }
   | { kind: 'series'; seasons: Season[] }
