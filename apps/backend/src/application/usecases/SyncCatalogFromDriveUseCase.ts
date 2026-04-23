@@ -1,7 +1,7 @@
 import type { ICatalogRepository } from '../../domain/repositories/ICatalogRepository';
 import type { IDriveService } from '../../domain/services/IDriveService';
 import type { Catalog, CatalogItem } from '../../domain/entities/Catalog';
-import { MetadataService } from '../../infrastructure/services/MetadataService';
+import { MetadataService, type ExternalMetadata } from '../../infrastructure/services/MetadataService';
 
 interface SyncCatalogInput {
   rootFolderId: string;
@@ -30,8 +30,38 @@ export class SyncCatalogFromDriveUseCase {
     const items: CatalogItem[] = [];
 
     for (const item of rawItems) {
-      // Enrichment with TMDb
-      const metadata = await this.metadataService.getMetadata(item.title, item.kind);
+      let metadata: ExternalMetadata | null = null;
+
+      // 1. Try to read from tmdb.json if it exists
+      if (item.tmdbFileId) {
+        try {
+          console.log(`[Sync] Reading cached metadata from tmdb.json for "${item.title}"`);
+          const cachedRaw = await this.driveService.readFileContent(item.tmdbFileId);
+          const rawData = JSON.parse(cachedRaw);
+          metadata = this.metadataService.mapExternalMetadata(rawData, item.kind);
+        } catch (err) {
+          console.warn(`[Sync] Error reading tmdb.json for "${item.title}", will fetch from TMDB:`, err);
+        }
+      }
+
+      // 2. If no cache, fetch from TMDB
+      if (!metadata) {
+        const result = await this.metadataService.getMetadata(item.title, item.kind);
+        if (result) {
+          metadata = result.mapped;
+          // Save back to Drive
+          try {
+            console.log(`[Sync] Saving metadata to tmdb.json for "${item.title}"`);
+            await this.driveService.writeFileContent(
+              item.driveFolderId, 
+              'tmdb.json', 
+              JSON.stringify(result.raw, null, 2)
+            );
+          } catch (err) {
+            console.error(`[Sync] Error saving tmdb.json for "${item.title}":`, err);
+          }
+        }
+      }
       
       const enrichedItem = {
         ...item,

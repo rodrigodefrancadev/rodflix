@@ -98,6 +98,28 @@ export class GoogleDriveService implements IDriveService {
     };
   }
 
+  async readFileContent(fileId: string): Promise<string> {
+    const res = await this.drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'text' }
+    );
+    return res.data as string;
+  }
+
+  async writeFileContent(folderId: string, fileName: string, content: string, mimeType = 'application/json'): Promise<void> {
+    await this.drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [folderId],
+        mimeType,
+      },
+      media: {
+        mimeType,
+        body: content,
+      },
+    });
+  }
+
   // ── Private helpers ───────────────────────────────────────────
 
   private async listChildren(folderId: string): Promise<drive_v3.Schema$File[]> {
@@ -122,10 +144,12 @@ export class GoogleDriveService implements IDriveService {
    * Reads metadata marker files from a folder:
    * - `{uuid}.id`   → existing database ID (skip re-indexing)
    * - `{year}.ano`  → release year
+   * - `tmdb.json`   → TMDB metadata cache
    */
-  private parseMarkers(files: drive_v3.Schema$File[]): { existingId?: string; year?: number } {
+  private parseMarkers(files: drive_v3.Schema$File[]): { existingId?: string; year?: number; tmdbFileId?: string } {
     let existingId: string | undefined;
     let year: number | undefined;
+    let tmdbFileId: string | undefined;
 
     for (const f of files) {
       const name = f.name ?? '';
@@ -136,15 +160,17 @@ export class GoogleDriveService implements IDriveService {
         if (!isNaN(parsed) && parsed > 1800 && parsed <= new Date().getFullYear() + 5) {
           year = parsed;
         }
+      } else if (name === 'tmdb.json') {
+        tmdbFileId = f.id ?? undefined;
       }
     }
 
-    return { existingId, year };
+    return { existingId, year, tmdbFileId };
   }
 
   private async processTitleFolder(folder: DriveFolder): Promise<CatalogItem | null> {
     const allChildren = await this.listChildren(folder.id);
-    const { existingId, year } = this.parseMarkers(allChildren);
+    const { existingId, year, tmdbFileId } = this.parseMarkers(allChildren);
 
     const subFolders = allChildren.filter(
       (f) => f.mimeType === 'application/vnd.google-apps.folder'
@@ -158,6 +184,7 @@ export class GoogleDriveService implements IDriveService {
       driveFolderId: folder.id,
       year,
       existingId,
+      tmdbFileId,
     };
 
     // ── Series: has sub-folders (each = a season) ──────────────

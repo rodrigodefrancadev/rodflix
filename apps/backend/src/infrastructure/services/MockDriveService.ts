@@ -70,4 +70,14 @@ export class MockDriveService implements IDriveService {
 
   // No-op in mock mode — real implementation writes a file back to Drive
   async writeIdMarker(_folderId: string, _uuid: string): Promise<void> {}
+
+  async getFileStream(_fileId: string): Promise<{ stream: NodeJS.ReadableStream; mimeType: string; size?: number }> {
+    throw new Error('getFileStream not implemented in MockDriveService');
+  }
+
+  async readFileContent(_fileId: string): Promise<string> {
+    throw new Error('readFileContent not implemented in MockDriveService');
+  }
+
+  async writeFileContent(_folderId: string, _fileName: string, _content: string, _mimeType?: string): Promise<void> {}
 }

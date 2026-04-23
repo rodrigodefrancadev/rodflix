@@ -41,4 +41,10 @@ export interface IDriveService {
 
   /** Returns a readable stream for a specific file ID */
   getFileStream(fileId: string): Promise<{ stream: NodeJS.ReadableStream; mimeType: string; size?: number }>;
+
+  /** Reads the text content of a file (e.g. for JSON) */
+  readFileContent(fileId: string): Promise<string>;
+
+  /** Writes text content to a file in a folder */
+  writeFileContent(folderId: string, fileName: string, content: string, mimeType?: string): Promise<void>;
 }
