@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { catalogApi } from '../api/catalog';
 import type { CatalogItem } from '../api/catalog';
 import { adminApi } from '../api/admin';
+import { VideoPlayer } from '../components/VideoPlayer';
 
 // Helper to get a stable color from a string
 const stringToColor = (str: string) => {
@@ -32,11 +33,24 @@ const stringToColor = (str: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-function CatalogCard({ item }: { item: CatalogItem }) {
+function CatalogCard({ item, onPlay }: { item: CatalogItem; onPlay: (id: string, title: string) => void }) {
   const color = stringToColor(item.title);
   
+  const handlePlayClick = () => {
+    if (item.kind === 'film') {
+      onPlay(item.driveFileId, item.title);
+    } else {
+      // For series, play the first episode of the first season
+      const firstEp = item.seasons[0]?.episodes[0];
+      if (firstEp) {
+        onPlay(firstEp.driveFileId, `${item.title} - S01E01`);
+      }
+    }
+  };
+
   return (
     <div
+      onClick={handlePlayClick}
       className="group relative overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-10 rfl-animate-slide-up"
       style={{ borderRadius: '0.5rem', aspectRatio: '16/9' }}
     >
@@ -58,12 +72,12 @@ function CatalogCard({ item }: { item: CatalogItem }) {
         onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
         onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
       >
-        <button className="flex items-center justify-center transition-transform active:scale-90" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '9999px', background: '#fff' }}>
+        <div className="flex items-center justify-center transition-transform active:scale-90" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '9999px', background: '#fff' }}>
           <Play className="w-4 h-4" style={{ color: '#000', fill: '#000', marginLeft: '2px' }} />
-        </button>
-        <button className="flex items-center justify-center transition-transform active:scale-90" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '9999px', border: '1px solid rgba(255,255,255,0.5)', background: 'transparent' }}>
+        </div>
+        <div className="flex items-center justify-center transition-transform active:scale-90" style={{ width: '2.5rem', height: '2.5rem', borderRadius: '9999px', border: '1px solid rgba(255,255,255,0.5)', background: 'transparent' }}>
           <Plus className="w-4 h-4 text-white" />
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -75,6 +89,7 @@ export function CatalogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'film' | 'series'>('all');
+  const [playingVideo, setPlayingVideo] = useState<{ id: string; title: string } | null>(null);
 
   const fetchCatalog = async () => {
     try {
@@ -114,8 +129,21 @@ export function CatalogPage() {
   // Featured item
   const featuredItem = items[0];
 
+  const handlePlay = (id: string, title: string) => {
+    setPlayingVideo({ id, title });
+  };
+
   return (
     <div className="min-h-screen text-white pb-20" style={{ backgroundColor: '#0A0A0A' }}>
+      {/* PLAYER MODAL */}
+      {playingVideo && (
+        <VideoPlayer 
+          fileId={playingVideo.id} 
+          title={playingVideo.title} 
+          onClose={() => setPlayingVideo(null)} 
+        />
+      )}
+
       {/* NAV */}
       <header className="fixed top-0 inset-x-0 z-50 px-6 py-4 flex items-center justify-between rfl-glass">
         <div className="flex items-center gap-8">
@@ -212,7 +240,10 @@ export function CatalogPage() {
                 Explore os títulos mais recentes e exclusivos sincronizados diretamente do seu Google Drive.
               </p>
               <div className="flex items-center gap-4">
-                <button className="rfl-btn-primary gap-2 h-12 px-8 text-lg font-bold">
+                <button 
+                  onClick={() => featuredItem.kind === 'film' ? handlePlay(featuredItem.driveFileId, featuredItem.title) : handlePlay(featuredItem.seasons[0]?.episodes[0]?.driveFileId, `${featuredItem.title} - S01E01`)}
+                  className="rfl-btn-primary gap-2 h-12 px-8 text-lg font-bold"
+                >
                   <Play className="w-5 h-5 fill-current" /> Assistir Agora
                 </button>
                 <button className="rfl-btn-secondary gap-2 h-12 px-6 bg-white/10 hover:bg-white/20">
@@ -253,7 +284,7 @@ export function CatalogPage() {
                         <Film className="w-5 h-5 text-red-500" /> Filmes Recentes
                       </h3>
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                        {films.map(item => <CatalogCard key={item.existingId} item={item} />)}
+                        {films.map(item => <CatalogCard key={item.existingId} item={item} onPlay={handlePlay} />)}
                       </div>
                     </section>
                   )}
@@ -264,7 +295,7 @@ export function CatalogPage() {
                         <Clapperboard className="w-5 h-5 text-red-500" /> Séries Exclusivas
                       </h3>
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                        {series.map(item => <CatalogCard key={item.existingId} item={item} />)}
+                        {series.map(item => <CatalogCard key={item.existingId} item={item} onPlay={handlePlay} />)}
                       </div>
                     </section>
                   )}
@@ -276,7 +307,7 @@ export function CatalogPage() {
                     {activeFilter === 'film' ? 'Todos os Filmes' : 'Todas as Séries'}
                   </h3>
                   <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                    {filteredItems.map(item => <CatalogCard key={item.existingId} item={item} />)}
+                    {filteredItems.map(item => <CatalogCard key={item.existingId} item={item} onPlay={handlePlay} />)}
                   </div>
                   {filteredItems.length === 0 && (
                      <div className="py-20 text-center text-white/20">

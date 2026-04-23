@@ -66,13 +66,31 @@ export class GoogleDriveService implements IDriveService {
       requestBody: {
         name: `${uuid}.id`,
         parents: [folderId],
-        mimeType: 'application/octet-stream',
+        mimeType: 'text/plain',
       },
       media: {
-        mimeType: 'application/octet-stream',
+        mimeType: 'text/plain',
         body: '',
       },
     });
+  }
+
+  async getFileStream(fileId: string): Promise<{ stream: NodeJS.ReadableStream; mimeType: string; size?: number }> {
+    const res = await this.drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'stream' }
+    );
+
+    const metadata = await this.drive.files.get({
+      fileId,
+      fields: 'mimeType, size',
+    });
+
+    return {
+      stream: res.data as NodeJS.ReadableStream,
+      mimeType: metadata.data.mimeType || 'video/mp4',
+      size: metadata.data.size ? parseInt(metadata.data.size, 10) : undefined,
+    };
   }
 
   // ── Private helpers ───────────────────────────────────────────

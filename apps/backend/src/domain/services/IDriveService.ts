@@ -37,4 +37,7 @@ export interface IDriveService {
    * Called after a title is first indexed so future syncs reuse the same ID.
    */
   writeIdMarker(folderId: string, uuid: string): Promise<void>;
+
+  /** Returns a readable stream for a specific file ID */
+  getFileStream(fileId: string): Promise<{ stream: NodeJS.ReadableStream; mimeType: string; size?: number }>;
 }
