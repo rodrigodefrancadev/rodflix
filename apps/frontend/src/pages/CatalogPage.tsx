@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   Film,
   Search,
-  Bell,
   LogOut,
   ChevronDown,
   Play,
@@ -156,12 +155,12 @@ export function CatalogPage() {
     }
   };
 
-  const films = items.filter(i => 
-    i.kind === 'film' && 
+  const films = items.filter(i =>
+    i.kind === 'film' &&
     (searchQuery === '' || i.title.toLowerCase().includes(searchQuery.toLowerCase()))
   );
-  const series = items.filter(i => 
-    i.kind === 'series' && 
+  const series = items.filter(i =>
+    i.kind === 'series' &&
     (searchQuery === '' || i.title.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -227,7 +226,7 @@ export function CatalogPage() {
 
         <div className="flex items-center gap-3">
           <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'bg-black/40 border-white/20 px-3' : 'bg-transparent border-transparent'} border rounded-md h-10`}>
-            <button 
+            <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-1 hover:text-white/80 transition-colors"
             >
@@ -242,7 +241,7 @@ export function CatalogPage() {
               autoFocus={isSearchOpen}
             />
             {searchQuery && (
-              <button 
+              <button
                 onClick={() => setSearchQuery('')}
                 className="p-1 hover:text-white transition-colors"
               >
@@ -282,125 +281,83 @@ export function CatalogPage() {
 
       <main>
         {/* HERO */}
-        {featuredItem ? (
-          <section
-            className="relative flex items-end px-6 rfl-animate-fade-in"
-            style={{
-              height: '80vh', paddingBottom: '8rem',
-              background: `
-                linear-gradient(to right, #0A0A0A 20%, rgba(10,10,10,0) 100%),
-                linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,0) 30%),
-                url('${featuredItem.bannerUrl || 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop'}') center/cover
-              `,
-            }}
-          >
-            <div className="max-w-xl">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="rfl-badge-red uppercase tracking-tighter font-black text-[10px]">Destaque</div>
-                {featuredItem.year && (
-                  <span className="text-xs font-bold text-white/60">{featuredItem.year}</span>
-                )}
-                {(featuredItem.kind === 'film' ? watchedIds.has(featuredItem.existingId) : (featuredItem.seasons[0]?.episodes[0] ? watchedIds.has(featuredItem.seasons[0].episodes[0].driveFileId) : false)) && (
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
-                    <Check className="w-3 h-3" />
-                    ASSISTIDO
-                  </div>
-                )}
+        {searchQuery.trim() === '' && (
+          featuredItem ? (
+            <section
+              className="relative flex items-end px-6 rfl-animate-fade-in"
+              style={{
+                height: '80vh', paddingBottom: '8rem',
+                background: `
+                  linear-gradient(to right, #0A0A0A 20%, rgba(10,10,10,0) 100%),
+                  linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,0) 30%),
+                  url('${featuredItem.bannerUrl || 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop'}') center/cover
+                `,
+              }}
+            >
+              <div className="max-w-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="rfl-badge-red uppercase tracking-tighter font-black text-[10px]">Destaque</div>
+                  {featuredItem.year && (
+                    <span className="text-xs font-bold text-white/60">{featuredItem.year}</span>
+                  )}
+                  {(featuredItem.kind === 'film' ? watchedIds.has(featuredItem.existingId) : (featuredItem.kind === 'series' && featuredItem.seasons[0]?.episodes[0] ? watchedIds.has(featuredItem.seasons[0].episodes[0].driveFileId) : false)) && (
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
+                      <Check className="w-3 h-3" />
+                      ASSISTIDO
+                    </div>
+                  )}
+                </div>
+                <h2 className="font-black mb-4 leading-tight uppercase tracking-tighter" style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)' }}>
+                  {featuredItem.title}
+                </h2>
+                <p className="text-sm md:text-base mb-8 leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '35rem' }}>
+                  {featuredItem.description || 'Explore os títulos mais recentes e exclusivos sincronizados diretamente do seu Google Drive.'}
+                </p>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => featuredItem.kind === 'film' ? handlePlay(featuredItem.driveFileId, featuredItem.title) : (featuredItem.kind === 'series' && featuredItem.seasons[0]?.episodes[0] ? handlePlay(featuredItem.seasons[0].episodes[0].driveFileId, `${featuredItem.title} - S01E01`) : null)}
+                    className="rfl-btn-primary gap-2 h-12 px-8 text-lg font-bold"
+                  >
+                    <Play className="w-5 h-5 fill-current" /> Assistir
+                  </button>
+                  <button
+                    onClick={() => setSelectedTitle(featuredItem)}
+                    className="rfl-btn-secondary gap-2 h-12 px-6 bg-white/20 hover:bg-white/30 text-white border-none"
+                  >
+                    <Info className="w-5 h-5" /> Mais Informações
+                  </button>
+                </div>
               </div>
-              <h2 className="font-black mb-4 leading-tight uppercase tracking-tighter" style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)' }}>
-                {featuredItem.title}
-              </h2>
-              <p className="text-sm md:text-base mb-8 leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '35rem' }}>
-                {featuredItem.description || 'Explore os títulos mais recentes e exclusivos sincronizados diretamente do seu Google Drive.'}
-              </p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => featuredItem.kind === 'film' ? handlePlay(featuredItem.driveFileId, featuredItem.title) : handlePlay(featuredItem.seasons[0]?.episodes[0]?.driveFileId, `${featuredItem.title} - S01E01`)}
-                  className="rfl-btn-primary gap-2 h-12 px-8 text-lg font-bold"
-                >
-                  <Play className="w-5 h-5 fill-current" /> Assistir
-                </button>
-                <button
-                  onClick={() => setSelectedTitle(featuredItem)}
-                  className="rfl-btn-secondary gap-2 h-12 px-6 bg-white/20 hover:bg-white/30 text-white border-none"
-                >
-                  <Info className="w-5 h-5" /> Mais Informações
-                </button>
+            </section>
+          ) : !isLoading && (
+            <div className="h-[60vh] flex items-center justify-center flex-col gap-6 text-center">
+              <XCircle className="w-20 h-20 text-white/10" />
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Catálogo Vazio</h2>
+                <p className="text-white/40 max-w-xs">Nenhum título foi encontrado no seu Google Drive. Sincronize agora para começar.</p>
               </div>
+              {isAdmin && (
+                <button onClick={handleSync} disabled={isSyncing} className="rfl-btn-primary gap-2">
+                  {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                  Sincronizar Agora
+                </button>
+              )}
             </div>
-          </section>
-        ) : !isLoading && (
-          <div className="h-[60vh] flex items-center justify-center flex-col gap-6 text-center">
-            <XCircle className="w-20 h-20 text-white/10" />
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Catálogo Vazio</h2>
-              <p className="text-white/40 max-w-xs">Nenhum título foi encontrado no seu Google Drive. Sincronize agora para começar.</p>
-            </div>
-            {isAdmin && (
-              <button onClick={handleSync} disabled={isSyncing} className="rfl-btn-primary gap-2">
-                {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                Sincronizar Agora
-              </button>
-            )}
-          </div>
+          )
         )}
 
-        <div className="px-6 -mt-16 relative z-10 space-y-12">
+        <div className={`px-6 ${searchQuery.trim() === '' ? '-mt-16' : 'pt-24'} relative z-10 space-y-12`}>
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-12 h-12 text-red-500 animate-spin" />
             </div>
           ) : (
             <>
-              {/* IF FILTERED OR ALL */}
-              {activeFilter === 'all' ? (
-                <>
-                  {films.length > 0 && (
-                    <section>
-                      <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2">
-                        <Film className="w-5 h-5 text-red-500" /> Filmes Recentes
-                      </h3>
-                      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                        {films.map(item => (
-                          <CatalogCard
-                            key={item.existingId}
-                            item={item}
-                            onClick={setSelectedTitle}
-                            isWatched={watchedIds.has(item.existingId)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {series.length > 0 && (
-                    <section>
-                      <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2">
-                        <Clapperboard className="w-5 h-5 text-red-500" /> Séries Exclusivas
-                      </h3>
-                      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                        {series.map(item => (
-                          <CatalogCard
-                            key={item.existingId}
-                            item={item}
-                            onClick={setSelectedTitle}
-                            isWatched={item.seasons[0]?.episodes[0] ? watchedIds.has(item.seasons[0].episodes[0].driveFileId) : false}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                  {films.length === 0 && series.length === 0 && searchQuery !== '' && (
-                    <div className="py-20 text-center text-white/20">
-                      Nenhum título encontrado para "{searchQuery}".
-                    </div>
-                  )}
-                </>
-              ) : (
-                <section>
-                  <h3 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
-                    {activeFilter === 'film' ? <Film className="w-6 h-6 text-red-500" /> : <Clapperboard className="w-6 h-6 text-red-500" />}
-                    {activeFilter === 'film' ? 'Todos os Filmes' : 'Todas as Séries'}
+              {searchQuery.trim() !== '' ? (
+                <section className="rfl-animate-fade-in">
+                  <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3">
+                    <Search className="w-6 h-6 text-red-500" />
+                    Resultados para "{searchQuery}"
                   </h3>
                   <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                     {filteredItems.map(item => (
@@ -408,16 +365,81 @@ export function CatalogPage() {
                         key={item.existingId}
                         item={item}
                         onClick={setSelectedTitle}
-                        isWatched={item.kind === 'film' ? watchedIds.has(item.existingId) : (item.seasons[0]?.episodes[0] ? watchedIds.has(item.seasons[0].episodes[0].driveFileId) : false)}
+                        isWatched={item.kind === 'film' ? watchedIds.has(item.existingId) : (item.kind === 'series' && item.seasons[0]?.episodes[0] ? watchedIds.has(item.seasons[0].episodes[0].driveFileId) : false)}
                       />
                     ))}
                   </div>
                   {filteredItems.length === 0 && (
                     <div className="py-20 text-center text-white/20">
-                      Nenhum item encontrado nesta categoria.
+                      Nenhum título encontrado para "{searchQuery}".
                     </div>
                   )}
                 </section>
+              ) : (
+                <>
+                  {/* IF FILTERED OR ALL */}
+                  {activeFilter === 'all' ? (
+                    <>
+                      {films.length > 0 && (
+                        <section>
+                          <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2">
+                            <Film className="w-5 h-5 text-red-500" /> Filmes Recentes
+                          </h3>
+                          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                            {films.map(item => (
+                              <CatalogCard
+                                key={item.existingId}
+                                item={item}
+                                onClick={setSelectedTitle}
+                                isWatched={watchedIds.has(item.existingId)}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {series.length > 0 && (
+                        <section>
+                          <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2">
+                            <Clapperboard className="w-5 h-5 text-red-500" /> Séries Exclusivas
+                          </h3>
+                          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                            {series.map(item => (
+                              <CatalogCard
+                                key={item.existingId}
+                                item={item}
+                                onClick={setSelectedTitle}
+                                isWatched={item.kind === 'series' && item.seasons[0]?.episodes[0] ? watchedIds.has(item.seasons[0].episodes[0].driveFileId) : false}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                    </>
+                  ) : (
+                    <section>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3">
+                        {activeFilter === 'film' ? <Film className="w-6 h-6 text-red-500" /> : <Clapperboard className="w-6 h-6 text-red-500" />}
+                        {activeFilter === 'film' ? 'Todos os Filmes' : 'Todas as Séries'}
+                      </h3>
+                      <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                        {filteredItems.map(item => (
+                          <CatalogCard
+                            key={item.existingId}
+                            item={item}
+                            onClick={setSelectedTitle}
+                            isWatched={item.kind === 'film' ? watchedIds.has(item.existingId) : (item.kind === 'series' && item.seasons[0]?.episodes[0] ? watchedIds.has(item.seasons[0].episodes[0].driveFileId) : false)}
+                          />
+                        ))}
+                      </div>
+                      {filteredItems.length === 0 && (
+                        <div className="py-20 text-center text-white/20">
+                          Nenhum item encontrado nesta categoria.
+                        </div>
+                      )}
+                    </section>
+                  )}
+                </>
               )}
             </>
           )}
