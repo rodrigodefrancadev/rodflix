@@ -6,3 +6,7 @@ dist
 coverage
 .nyc_output
 *.log
+
+# Google Service Account credentials
+*-e9d942710542.json
+rodflix-*.json

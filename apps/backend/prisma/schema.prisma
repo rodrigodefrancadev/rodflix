@@ -32,10 +32,11 @@ model CatalogItem {
   title       String
   type        ItemType
   folderId    String   @unique
+  year        Int?     // From {year}.ano marker file in Drive folder
   posterUrl   String?
   bannerUrl   String?
   description String?
-  fileUrl     String?  // If type == FILM, this stores the direct video reference
+  fileUrl     String?  // If type == FILM, direct video Drive file ID
   
   seasons     Season[]
   
