@@ -22,6 +22,9 @@ export class PrismaCatalogRepository implements ICatalogRepository {
               folderId: item.driveFolderId,
               fileUrl: item.driveFileId,
               year: item.year ?? null,
+              posterUrl: item.posterUrl ?? null,
+              bannerUrl: item.bannerUrl ?? null,
+              description: item.description ?? null,
             },
           });
         } else {
@@ -33,6 +36,9 @@ export class PrismaCatalogRepository implements ICatalogRepository {
               type: 'SERIES',
               folderId: item.driveFolderId,
               year: item.year ?? null,
+              posterUrl: item.posterUrl ?? null,
+              bannerUrl: item.bannerUrl ?? null,
+              description: item.description ?? null,
               seasons: {
                 create: item.seasons.map((season) => ({
                   number: season.number,
@@ -75,6 +81,9 @@ export class PrismaCatalogRepository implements ICatalogRepository {
         driveFolderId: dbItem.folderId,
         existingId: dbItem.id,
         year: dbItem.year ?? undefined,
+        posterUrl: dbItem.posterUrl ?? undefined,
+        bannerUrl: dbItem.bannerUrl ?? undefined,
+        description: dbItem.description ?? undefined,
       };
 
       if (dbItem.type === 'FILM') {

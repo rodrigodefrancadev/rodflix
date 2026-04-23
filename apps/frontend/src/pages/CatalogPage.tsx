@@ -51,17 +51,25 @@ function CatalogCard({ item, onPlay }: { item: CatalogItem; onPlay: (id: string,
   return (
     <div
       onClick={handlePlayClick}
-      className="group relative overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-10 rfl-animate-slide-up"
-      style={{ borderRadius: '0.5rem', aspectRatio: '16/9' }}
+      className="group relative overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-10 rfl-animate-slide-up bg-[#141414]"
+      style={{ borderRadius: '0.5rem', aspectRatio: '2/3' }} // Using 2:3 for posters
     >
-      <div className="absolute inset-0" style={{ 
-        background: `linear-gradient(135deg, ${color}cc, ${color}44, #0a0a0a)` 
-      }} />
+      {item.posterUrl ? (
+        <img 
+          src={item.posterUrl} 
+          alt={item.title}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-40"
+        />
+      ) : (
+        <div className="absolute inset-0" style={{ 
+          background: `linear-gradient(135deg, ${color}cc, ${color}44, #0a0a0a)` 
+        }} />
+      )}
 
-      <div className="absolute inset-0 p-4 flex flex-col justify-between rfl-glass-dark group-hover:bg-transparent transition-colors">
+      <div className="absolute inset-0 p-4 flex flex-col justify-between rfl-glass-dark group-hover:bg-transparent transition-colors opacity-0 group-hover:opacity-100">
         <div className="flex justify-between items-start">
           <span className="rfl-badge-red text-[10px] py-0 px-1.5">{item.kind === 'film' ? 'Filme' : 'Série'}</span>
-          {item.year && <span className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>{item.year}</span>}
+          {item.year && <span className="text-[10px] font-medium text-white/60">{item.year}</span>}
         </div>
         <p className="font-bold text-sm leading-tight line-clamp-2" style={{ textShadow: '0 1px 8px rgba(0,0,0,1)' }}>{item.title}</p>
       </div>
@@ -218,17 +226,17 @@ export function CatalogPage() {
           <section
             className="relative flex items-end px-6 rfl-animate-fade-in"
             style={{
-              height: '70vh', paddingBottom: '6rem',
+              height: '80vh', paddingBottom: '8rem',
               background: `
                 linear-gradient(to right, #0A0A0A 20%, rgba(10,10,10,0) 100%),
                 linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,0) 30%),
-                url('https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop') center/cover
+                url('${featuredItem.bannerUrl || 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop'}') center/cover
               `,
             }}
           >
             <div className="max-w-xl">
               <div className="flex items-center gap-2 mb-4">
-                <div className="rfl-badge-red uppercase tracking-tighter font-black text-[10px]">Especial</div>
+                <div className="rfl-badge-red uppercase tracking-tighter font-black text-[10px]">Destaque</div>
                 {featuredItem.year && (
                    <span className="text-xs font-bold text-white/60">{featuredItem.year}</span>
                 )}
@@ -236,8 +244,8 @@ export function CatalogPage() {
               <h2 className="font-black mb-4 leading-tight uppercase tracking-tighter" style={{ fontSize: 'clamp(2.5rem, 8vw, 4.5rem)' }}>
                 {featuredItem.title}
               </h2>
-              <p className="text-sm md:text-base mb-8 leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '30rem' }}>
-                Explore os títulos mais recentes e exclusivos sincronizados diretamente do seu Google Drive.
+              <p className="text-sm md:text-base mb-8 leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '35rem' }}>
+                {featuredItem.description || 'Explore os títulos mais recentes e exclusivos sincronizados diretamente do seu Google Drive.'}
               </p>
               <div className="flex items-center gap-4">
                 <button 

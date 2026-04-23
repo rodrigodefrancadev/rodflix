@@ -1,6 +1,7 @@
 import type { ICatalogRepository } from '../../domain/repositories/ICatalogRepository';
 import type { IDriveService } from '../../domain/services/IDriveService';
 import type { Catalog, CatalogItem } from '../../domain/entities/Catalog';
+import { MetadataService } from '../../infrastructure/services/MetadataService';
 
 interface SyncCatalogInput {
   rootFolderId: string;
@@ -15,7 +16,8 @@ interface SyncCatalogOutput {
 export class SyncCatalogFromDriveUseCase {
   constructor(
     private readonly driveService: IDriveService,
-    private readonly catalogRepository: ICatalogRepository
+    private readonly catalogRepository: ICatalogRepository,
+    private readonly metadataService: MetadataService = new MetadataService()
   ) {}
 
   async execute(input: SyncCatalogInput): Promise<SyncCatalogOutput> {
@@ -28,15 +30,25 @@ export class SyncCatalogFromDriveUseCase {
     const items: CatalogItem[] = [];
 
     for (const item of rawItems) {
-      if (!item.existingId) {
-        // Generate a UUID via crypto (available in Node 16+)
+      // Enrichment with TMDb
+      const metadata = await this.metadataService.getMetadata(item.title, item.kind);
+      
+      const enrichedItem = {
+        ...item,
+        posterUrl: metadata?.posterUrl,
+        bannerUrl: metadata?.bannerUrl,
+        description: metadata?.description,
+        year: metadata?.year || item.year, // prefer TMDb year if found
+      };
+
+      if (!enrichedItem.existingId) {
         const { randomUUID } = await import('crypto');
         const uuid = randomUUID();
-        await this.driveService.writeIdMarker(item.driveFolderId, uuid);
-        items.push({ ...item, existingId: uuid });
+        await this.driveService.writeIdMarker(enrichedItem.driveFolderId, uuid);
+        items.push({ ...enrichedItem, existingId: uuid });
         newItems++;
       } else {
-        items.push(item);
+        items.push(enrichedItem);
       }
     }
 

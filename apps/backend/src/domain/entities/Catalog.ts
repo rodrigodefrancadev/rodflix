@@ -5,6 +5,7 @@ export interface Episode {
   driveFileId: string;
   /** Sequential number within the season */
   order: number;
+  thumbnailLink?: string;
 }
 
 // ── Season ───────────────────────────────────────────────────
@@ -27,6 +28,10 @@ interface CatalogItemBase {
    * instead of generating a new one.
    */
   existingId?: string;
+  posterUrl?: string;
+  bannerUrl?: string;
+  description?: string;
+  driveThumbnailUrl?: string;
 }
 
 export interface Film extends CatalogItemBase {

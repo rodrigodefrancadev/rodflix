@@ -44,7 +44,12 @@ export class GoogleDriveService implements IDriveService {
     const items = await this.listChildren(folderId);
     return items
       .filter((f) => f.mimeType && VIDEO_MIME_TYPES.has(f.mimeType))
-      .map((f) => ({ id: f.id!, name: f.name!, mimeType: f.mimeType! }));
+      .map((f) => ({ 
+        id: f.id!, 
+        name: f.name!, 
+        mimeType: f.mimeType!, 
+        thumbnailLink: f.thumbnailLink ?? undefined 
+      }));
   }
 
   async buildCatalog(rootFolderId: string): Promise<CatalogItem[]> {
@@ -102,7 +107,7 @@ export class GoogleDriveService implements IDriveService {
     do {
       const res = await this.drive.files.list({
         q: `'${folderId}' in parents and trashed = false`,
-        fields: 'nextPageToken, files(id, name, mimeType)',
+        fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink)',
         pageSize: 1000,
         pageToken,
       });
@@ -168,7 +173,7 @@ export class GoogleDriveService implements IDriveService {
     if (videoFiles.length >= 1) {
       // Prefer the first video alphabetically
       const video = videoFiles.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))[0];
-      const film: Film = { kind: 'film', ...base, driveFileId: video.id! };
+      const film: Film = { kind: 'film', ...base, driveFileId: video.id!, driveThumbnailUrl: video.thumbnailLink ?? undefined };
       return film;
     }
 
@@ -212,6 +217,7 @@ export class GoogleDriveService implements IDriveService {
       title: v.name!,
       driveFileId: v.id!,
       order: idx + 1,
+      thumbnailLink: v.thumbnailLink ?? undefined,
     }));
   }
 }
