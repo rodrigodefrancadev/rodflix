@@ -5,6 +5,7 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { CatalogPage } from './pages/CatalogPage';
+import { CatalogProvider } from './contexts/CatalogContext';
 import { AdminPage } from './pages/AdminPage';
 
 function App() {
@@ -19,7 +20,9 @@ function App() {
             path="/catalog"
             element={
               <ProtectedRoute>
-                <CatalogPage />
+                <CatalogProvider>
+                  <CatalogPage />
+                </CatalogProvider>
               </ProtectedRoute>
             }
           />

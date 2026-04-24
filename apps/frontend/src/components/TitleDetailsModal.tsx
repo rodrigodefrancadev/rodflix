@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  X, Play, Plus, ThumbsUp, Share2, 
+import {
+  X, Play, Plus, ThumbsUp, Share2,
   ChevronDown, Info, Calendar, Clock,
-  PlayCircle, Download, Check
+  PlayCircle, Download, Check, ThumbsDown, Heart
 } from 'lucide-react';
 import type { CatalogItem, Season, Episode } from '../api/catalog';
 
@@ -14,6 +14,9 @@ interface TitleDetailsModalProps {
   similarTitles?: CatalogItem[];
   watchedIds: Set<string>;
   onToggleWatched: (refId: string, kind: 'FILM' | 'EPISODE') => void;
+  onSelectSimilar?: (item: CatalogItem) => void;
+  rating?: 'LIKE' | 'LOVE' | 'DISLIKE' | null;
+  onRate?: (type: 'LIKE' | 'LOVE' | 'DISLIKE' | null) => void;
 }
 
 const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjljNDAwZWRlZjBhMGZlN2JiODQyZGU4ZTI1NThkNiIsIm5iZiI6MTc3NjkxNDY1MC4yMjIwMDAxLCJzdWIiOiI2OWU5OTBkYWYxY2FjNTY1OTIzMzQyN2MiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.Yvw1EDk5G2eDeLq_o4ENx7h3PHWzpIsKvZ6bT8Tdzc0';
@@ -40,7 +43,6 @@ function normalizeCertification(cert: string | null): string | null {
     'UR': 'L',
     // UK BBFC
     'U': 'L',
-    'PG': '10',
     '12': '12',
     '12A': '12',
     '15': '14',
@@ -54,26 +56,36 @@ function normalizeCertification(cert: string | null): string | null {
     '9': '10',
     '11': '12',
     '13': '12',
-    '15': '14',
     '17': '16',
   };
 
   return map[cert] ?? cert;
 }
 
-export function TitleDetailsModal({ 
-  item, 
-  isOpen, 
-  onClose, 
-  onPlay, 
+function getGenreIds(tmdbData: any): number[] {
+  if (!tmdbData) return [];
+  if (Array.isArray(tmdbData.genre_ids)) return tmdbData.genre_ids;
+  if (Array.isArray(tmdbData.genres)) return tmdbData.genres.map((g: any) => g.id);
+  return [];
+}
+
+export function TitleDetailsModal({
+  item,
+  isOpen,
+  onClose,
+  onPlay,
   similarTitles = [],
   watchedIds,
-  onToggleWatched
+  onToggleWatched,
+  onSelectSimilar,
+  rating,
+  onRate
 }: TitleDetailsModalProps) {
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(
     item.kind === 'series' ? item.seasons[0] : null
   );
   const [fullTmdb, setFullTmdb] = useState<any>(item.tmdbRaw || null);
+  const [showRatingMenu, setShowRatingMenu] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +93,9 @@ export function TitleDetailsModal({
       document.body.style.overflow = 'hidden';
       if (item.kind === 'series') setSelectedSeason(item.seasons[0]);
       setFullTmdb(item.tmdbRaw || null);
+      
+      // Scroll to top when item changes
+      modalRef.current?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
 
       // Fetch full details from TMDB if we have an id but no credits yet
       const tmdbId = item.tmdbRaw?.id;
@@ -93,7 +108,7 @@ export function TitleDetailsModal({
         })
           .then(r => r.json())
           .then(data => setFullTmdb((prev: any) => ({ ...prev, ...data })))
-          .catch(() => {/* silent */});
+          .catch(() => {/* silent */ });
       }
     } else {
       document.body.style.overflow = 'auto';
@@ -109,7 +124,7 @@ export function TitleDetailsModal({
     || fullTmdb?.created_by?.[0]?.name
     || null;
   const genres = fullTmdb?.genres?.map((g: any) => g.name).join(' • ') || null;
-  const rating = fullTmdb?.vote_average ? fullTmdb.vote_average.toFixed(1) : null;
+  const tmdbRating = fullTmdb?.vote_average ? fullTmdb.vote_average.toFixed(1) : null;
   const duration = fullTmdb?.runtime
     ? `${Math.floor(fullTmdb.runtime / 60)}h ${fullTmdb.runtime % 60}m`
     : null;
@@ -133,6 +148,19 @@ export function TitleDetailsModal({
     }
   })();
 
+  const currentGenreIds = getGenreIds(item.tmdbRaw);
+  const rankedSimilarTitles = similarTitles
+    .map(similar => {
+      const similarGenreIds = getGenreIds(similar.tmdbRaw);
+      const score = similarGenreIds.reduce((acc: number, id: number) => {
+        return acc + (currentGenreIds.includes(id) ? 1 : 0);
+      }, 0);
+      return { similar, score };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -149,17 +177,17 @@ export function TitleDetailsModal({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto pt-10 pb-20 px-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
       onClick={handleBackdropClick}
     >
-      <div 
+      <div
         ref={modalRef}
         className="relative w-full max-w-4xl bg-[#181818] rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300"
         style={{ minHeight: '80vh' }}
       >
         {/* CLOSE BUTTON */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 z-[110] p-2 bg-black/40 hover:bg-black/60 rounded-full transition-colors text-white"
         >
@@ -168,24 +196,24 @@ export function TitleDetailsModal({
 
         {/* HERO / BANNER */}
         <div className="relative aspect-video w-full">
-          <img 
-            src={item.bannerUrl || item.posterUrl} 
+          <img
+            src={item.bannerUrl || item.posterUrl}
             alt={item.title}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-black/30" />
-          
+
           <div className="absolute bottom-10 left-12 right-12">
             <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter drop-shadow-lg">{item.title}</h1>
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={handlePlayMain}
                 className="flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded hover:bg-white/90 transition-colors"
               >
                 <Play className="w-6 h-6 fill-black" />
                 Assistir
               </button>
-              <button 
+              <button
                 onClick={() => onToggleWatched(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || ''), item.kind === 'film' ? 'FILM' : 'EPISODE')}
                 className="flex flex-col items-center gap-1 min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/watch"
               >
@@ -196,9 +224,56 @@ export function TitleDetailsModal({
                   {watchedIds.has(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || '')) ? 'Assistido' : 'Marcar visto'}
                 </span>
               </button>
-              <button className="p-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/20 transition-colors backdrop-blur-md">
-                <ThumbsUp className="w-6 h-6" />
-              </button>
+              <div className="relative" onMouseLeave={() => setShowRatingMenu(false)}>
+                <button 
+                  onMouseEnter={() => setShowRatingMenu(true)}
+                  onClick={() => setShowRatingMenu(!showRatingMenu)}
+                  className={`flex items-center justify-center w-12 h-12 rounded-full border transition-colors backdrop-blur-md ${rating ? 'bg-white text-black border-white' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+                >
+                  {rating === 'LIKE' && <ThumbsUp className="w-5 h-5 fill-black" />}
+                  {rating === 'LOVE' && <Heart className="w-5 h-5 fill-red-500 text-red-500" />}
+                  {rating === 'DISLIKE' && <ThumbsDown className="w-5 h-5 fill-black" />}
+                  {!rating && <ThumbsUp className="w-5 h-5" />}
+                </button>
+
+                {showRatingMenu && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#2b2b2b] p-1.5 rounded-full flex items-center gap-1 shadow-xl animate-in slide-in-from-bottom-2 fade-in">
+                    <button 
+                      onClick={() => { onRate?.('DISLIKE'); setShowRatingMenu(false); }}
+                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'DISLIKE' ? 'text-white' : 'text-white/50'}`}
+                      title="Não Gostei"
+                    >
+                      <ThumbsDown className={`w-6 h-6 ${rating === 'DISLIKE' ? 'fill-white' : ''}`} />
+                    </button>
+                    <button 
+                      onClick={() => { onRate?.('LIKE'); setShowRatingMenu(false); }}
+                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'LIKE' ? 'text-white' : 'text-white/50'}`}
+                      title="Gostei"
+                    >
+                      <ThumbsUp className={`w-6 h-6 ${rating === 'LIKE' ? 'fill-white' : ''}`} />
+                    </button>
+                    <button 
+                      onClick={() => { onRate?.('LOVE'); setShowRatingMenu(false); }}
+                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'LOVE' ? 'text-red-500' : 'text-white/50'}`}
+                      title="Gostei Muito"
+                    >
+                      <Heart className={`w-6 h-6 ${rating === 'LOVE' ? 'fill-red-500' : ''}`} />
+                    </button>
+                    {rating && (
+                       <div className="w-px h-6 bg-white/20 mx-1"></div>
+                    )}
+                    {rating && (
+                      <button 
+                        onClick={() => { onRate?.(null); setShowRatingMenu(false); }}
+                        className="p-2 rounded-full transition-transform hover:scale-110 hover:bg-white/10 text-white/50"
+                        title="Remover Avaliação"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -208,7 +283,6 @@ export function TitleDetailsModal({
           {/* LEFT: Info */}
           <div className="md:col-span-2 space-y-6">
             <div className="flex items-center gap-3 text-sm font-bold">
-              {rating && <span className="text-green-500">{rating} Relevante</span>}
               {ageCert && <span className="px-1.5 py-0.5 border border-white/40 text-[10px] rounded">{ageCert}</span>}
               {item.year && <span>{item.year}</span>}
               {duration && <span>{duration}</span>}
@@ -248,7 +322,7 @@ export function TitleDetailsModal({
           <div className="px-12 pb-12">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold">Episódios</h3>
-              <select 
+              <select
                 value={selectedSeason?.number}
                 onChange={(e) => setSelectedSeason(item.seasons.find(s => s.number === Number(e.target.value)) || null)}
                 className="bg-[#242424] border border-white/20 px-4 py-2 rounded text-sm font-bold focus:outline-none"
@@ -261,17 +335,17 @@ export function TitleDetailsModal({
 
             <div className="space-y-1">
               {selectedSeason?.episodes.map((ep, i) => (
-                <div 
+                <div
                   key={i}
                   onClick={() => onPlay(ep.driveFileId, `${item.title} - S${String(selectedSeason.number).padStart(2, '0')}E${String(ep.order).padStart(2, '0')}`)}
                   className="group flex items-center gap-6 p-4 rounded-lg hover:bg-[#333] transition-colors cursor-pointer border-b border-white/5"
                 >
                   <span className="text-2xl font-bold text-white/40 group-hover:text-white w-8 text-center">{ep.order}</span>
                   <div className="relative w-40 aspect-video rounded overflow-hidden bg-white/5">
-                     {/* Placeholder for episode thumbnail */}
-                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
-                        <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                     </div>
+                    {/* Placeholder for episode thumbnail */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
+                      <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-1">
@@ -283,7 +357,7 @@ export function TitleDetailsModal({
                     </p>
                   </div>
                   <div className="flex items-center">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleWatched(ep.driveFileId, 'EPISODE');
@@ -307,19 +381,29 @@ export function TitleDetailsModal({
         {/* SIMILAR TITLES */}
         <div className="px-12 pb-12">
           <h3 className="text-2xl font-bold mb-6">Títulos Semelhantes</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {similarTitles.slice(0, 6).map((similar) => (
-              <div key={similar.existingId} className="bg-[#2f2f2f] rounded overflow-hidden group cursor-pointer hover:bg-[#3f3f3f] transition-colors">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {rankedSimilarTitles.map(({ similar, score }) => (
+              <div
+                key={similar.existingId}
+                onClick={() => {
+                  if (onSelectSimilar) {
+                    onSelectSimilar(similar);
+                  } else {
+                    onClose();
+                  }
+                }}
+                className="bg-[#2f2f2f] rounded overflow-hidden group cursor-pointer hover:bg-[#3f3f3f] transition-colors"
+              >
                 <div className="aspect-video relative">
                   <img src={similar.bannerUrl || similar.posterUrl} className="w-full h-full object-cover" alt="" />
                   <div className="absolute top-2 right-2 text-xs font-bold px-1 bg-black/40 rounded">HD</div>
                 </div>
                 <div className="p-4 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-green-500">98% Relevante</span>
+                    <span className="text-[10px] font-bold text-green-500">{similar.title}</span>
                     <span className="text-xs text-white/40">{similar.year}</span>
                   </div>
-                  <p className="text-xs text-white/60 line-clamp-3">
+                  <p className="text-[10px] text-white/60 line-clamp-3">
                     {similar.description || 'Se você gostou deste título, certamente vai se interessar por esta recomendação exclusiva.'}
                   </p>
                 </div>

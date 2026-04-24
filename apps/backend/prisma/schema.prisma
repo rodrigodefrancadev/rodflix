@@ -21,6 +21,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   watched   WatchedItem[]
+  ratings   Rating[]
 }
 
 enum Role {
@@ -42,6 +43,7 @@ model CatalogItem {
   tmdbRaw     Json?    // Cached TMDB API response
   
   seasons     Season[]
+  ratings     Rating[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -95,4 +97,23 @@ model WatchedItem {
 enum WatchedKind {
   FILM
   EPISODE
+}
+
+enum RatingType {
+  LIKE
+  LOVE
+  DISLIKE
+}
+
+model Rating {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalogItemId String
+  catalogItem   CatalogItem @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+  type          RatingType
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, catalogItemId])
 }
