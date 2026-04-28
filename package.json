@@ -9,8 +9,10 @@
     "dev:api": "npm run dev -w backend",
     "dev:web": "npm run dev -w frontend",
     "build:api": "npm run build -w backend",
+    "build:web": "npm run build -w frontend",
     "start:api": "npm run start -w backend",
     "deploy:api": "npm run build -w backend && npm run db:migrate:prod -w backend",
+    "preview:web": "npm run preview -w frontend",
     "promote-to-admin": "npm run promote-to-admin -w backend --"
   }
 }
