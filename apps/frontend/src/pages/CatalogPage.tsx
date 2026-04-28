@@ -22,7 +22,6 @@ import { isItemWatched } from '../utils/catalog';
 export function CatalogPage() {
   const { user, logout, isAdmin } = useAuth();
   const {
-    items,
     isLoading,
     isSyncing,
     activeFilter,
@@ -201,7 +200,6 @@ export function CatalogPage() {
           item={selectedTitle}
           onClose={() => setSelectedTitle(null)}
           onPlay={handlePlay}
-          similarTitles={items.filter(i => i.existingId !== selectedTitle.existingId)}
           watchedIds={watchedIds}
           onToggleWatched={toggleWatched}
           onSelectSimilar={setSelectedTitle}

@@ -5,10 +5,8 @@ import {
   RefreshCw, 
   CheckCircle, 
   XCircle, 
-  Shield, 
   ShieldAlert, 
   ChevronLeft,
-  User as UserIcon,
   Search,
   Filter,
   Calendar

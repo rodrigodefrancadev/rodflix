@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Terminal as TerminalIcon, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Terminal as TerminalIcon, X, Minimize2 } from 'lucide-react';
 
 export interface LogEntry {
   message: string;

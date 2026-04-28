@@ -41,19 +41,21 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [featuredItem, setFeaturedItem] = useState<CatalogItem | undefined>();
   const [ratings, setRatings] = useState<Record<string, RatingType>>({});
 
   const fetchCatalog = async () => {
     try {
       setIsLoading(true);
-      const [catalogData, watchedData, ratingsData] = await Promise.all([
+      const [catalogData, watchedData, ratingsData, featuredData] = await Promise.all([
         catalogApi.getCatalog(),
         watchedApi.getWatched(),
-        ratingApi.getRatings()
+        ratingApi.getRatings(),
+        catalogApi.getFeatured()
       ]);
       setItems(catalogData);
       setWatchedIds(new Set(watchedData.map(w => w.refId)));
+      setFeaturedItem(featuredData);
       
       const ratingsMap: Record<string, RatingType> = {};
       ratingsData.forEach(r => ratingsMap[r.catalogItemId] = r.type);
@@ -127,32 +129,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     return matchesFilter && matchesSearch;
   });
 
-  useEffect(() => {
-    const count = items.length;
-    if (count <= 1) return;
-    setFeaturedIndex(Math.floor(Math.random() * count));
-  }, [activeFilter, searchQuery, items.length]);
-
-  useEffect(() => {
-    const count = filteredItems.length;
-    if (count <= 1) return;
-
-    setFeaturedIndex(Math.floor(Math.random() * count));
-    const interval = setInterval(() => {
-      setFeaturedIndex(prev => {
-        if (count <= 1) return 0;
-        let nextIndex;
-        do {
-          nextIndex = Math.floor(Math.random() * count);
-        } while (nextIndex === prev);
-        return nextIndex;
-      });
-    }, 20000);
-
-    return () => clearInterval(interval);
-  }, [filteredItems.length]);
-
-  const featuredItem = filteredItems[featuredIndex] ?? filteredItems[0];
+  const displayFeaturedItem = (featuredItem && filteredItems.some(i => i.existingId === featuredItem.existingId))
+    ? featuredItem
+    : filteredItems[0];
 
   return (
     <CatalogContext.Provider
@@ -175,7 +154,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         films,
         series,
         filteredItems,
-        featuredItem,
+        featuredItem: displayFeaturedItem,
       }}
     >
       {children}
