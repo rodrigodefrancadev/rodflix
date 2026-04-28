@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { socialApi } from '../api/social';
 import type { MemberSummary } from '../api/social';
-import { Loader2, Users, Calendar, Play, UserCircle } from 'lucide-react';
+import { Loader2, Users, Calendar, Play, UserCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -37,6 +37,16 @@ export function MembersPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] pt-24 pb-20 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
+        <button 
+          onClick={() => navigate('/catalog')}
+          className="flex items-center gap-2 text-white/40 hover:text-red-600 transition-all font-bold uppercase tracking-widest text-xs mb-8 group"
+        >
+          <div className="p-2 bg-white/5 rounded-full group-hover:bg-red-600/20 transition-all">
+            <ArrowLeft className="w-4 h-4" />
+          </div>
+          Voltar para o Catálogo
+        </button>
+
         <header className="mb-12">
           <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4">
             <Users className="w-10 h-10 text-red-600" />
