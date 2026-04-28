@@ -14,5 +14,8 @@
     "deploy:api": "npm run build -w backend && npm run db:migrate:prod -w backend",
     "preview:web": "npm run preview -w frontend",
     "promote-to-admin": "npm run promote-to-admin -w backend --"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
