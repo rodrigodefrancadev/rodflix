@@ -8,12 +8,43 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCatalog } from '../contexts/CatalogContext';
+import { TitleDetailsModal } from '../components/TitleDetailsModal';
+import { VideoPlayer } from '../components/VideoPlayer';
+import type { CatalogItem } from '../api/catalog';
 
 export function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  const {
+    items,
+    watchedIds,
+    toggleWatched,
+    ratings,
+    handleRate,
+  } = useCatalog();
+
+  const [selectedTitle, setSelectedTitle] = useState<CatalogItem | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<{ id: string; title: string } | null>(null);
+
+  const handleOpenTitle = (catalogItemId: string) => {
+    const item = items.find(i => i.existingId === catalogItemId);
+    if (item) {
+      setSelectedTitle(item);
+    } else {
+      // Fallback: If not found in current items (due to filtering), 
+      // we could fetch it, but for now let's show a toast or ignore.
+      // In a real app, we'd have a getTitleById in the context.
+      console.warn('Title not found in current catalog items');
+    }
+  };
+
+  const handlePlay = (id: string, title: string) => {
+    setPlayingVideo({ id, title });
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -125,7 +156,8 @@ export function ProfilePage() {
             {profile.activity.map((item) => (
               <div 
                 key={item.id}
-                className="bg-[#141414] border border-white/5 rounded-2xl p-4 md:p-6 flex items-center gap-6 hover:bg-white/[0.02] transition-all group"
+                onClick={() => handleOpenTitle(item.catalogItemId)}
+                className="bg-[#141414] border border-white/5 rounded-2xl p-4 md:p-6 flex items-center gap-6 hover:bg-white/[0.02] transition-all group cursor-pointer"
               >
                 {/* POSTER / ICON */}
                 <div className="w-16 h-24 md:w-20 md:h-28 flex-shrink-0 relative overflow-hidden rounded-lg bg-[#1a1a1a]">
@@ -176,6 +208,30 @@ export function ProfilePage() {
           </div>
         </section>
       </div>
+
+      {/* PLAYER MODAL */}
+      {playingVideo && (
+        <VideoPlayer
+          fileId={playingVideo.id}
+          title={playingVideo.title}
+          onClose={() => setPlayingVideo(null)}
+        />
+      )}
+
+      {/* DETAILS MODAL */}
+      {selectedTitle && (
+        <TitleDetailsModal
+          isOpen={!!selectedTitle}
+          item={selectedTitle}
+          onClose={() => setSelectedTitle(null)}
+          onPlay={handlePlay}
+          watchedIds={watchedIds}
+          onToggleWatched={toggleWatched}
+          onSelectSimilar={setSelectedTitle}
+          rating={ratings[selectedTitle.existingId] || null}
+          onRate={(type) => handleRate(selectedTitle.existingId, type)}
+        />
+      )}
     </div>
   );
 }
