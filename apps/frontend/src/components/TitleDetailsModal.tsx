@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  X, Play, Plus, ThumbsUp, Share2,
-  ChevronDown, Info, Calendar, Clock,
-  PlayCircle, Download, Check, ThumbsDown, Heart
+  X, Play, ThumbsUp,
+  Check, ThumbsDown, Heart
 } from 'lucide-react';
-import type { CatalogItem, Season, Episode } from '../api/catalog';
+import type { CatalogItem, Season } from '../api/catalog';
 
 interface TitleDetailsModalProps {
   item: CatalogItem;

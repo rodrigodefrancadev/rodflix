@@ -11,7 +11,7 @@ export function VideoPlayer({ fileId, title, onClose }: VideoPlayerProps) {
   const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col rfl-animate-fade-in">
+    <div className="fixed inset-0 z-[101] bg-black flex flex-col rfl-animate-fade-in">
       {/* Top bar */}
       <div className="absolute top-0 inset-x-0 z-10 p-6 flex items-center justify-between transition-opacity duration-300 hover:opacity-100 opacity-40 hover:bg-black/60"
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
