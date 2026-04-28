@@ -19,11 +19,11 @@ export class SyncCatalogFromDriveUseCase {
     private readonly driveService: IDriveService,
     private readonly catalogRepository: ICatalogRepository,
     private readonly metadataService: MetadataService = new MetadataService()
-  ) {}
+  ) { }
 
   async execute(input: SyncCatalogInput): Promise<SyncCatalogOutput> {
     syncLogService.log('Iniciando sincronização do catálogo...', 'info');
-    
+
     // 0. Load existing catalog to use as local metadata cache
     const existingCatalog = await this.catalogRepository.findLatest();
     const dbCache = new Map<string, any>();
@@ -45,9 +45,9 @@ export class SyncCatalogFromDriveUseCase {
     for (let i = 0; i < rawItems.length; i++) {
       const item = rawItems[i];
       const progress = `[${i + 1}/${rawItems.length}]`;
-      
+
       syncLogService.log(`${progress} Processando: "${item.title}"...`, 'info');
-      
+
       let metadata: ExternalMetadata | null = null;
       let tmdbRaw: any = null;
 
@@ -83,7 +83,7 @@ export class SyncCatalogFromDriveUseCase {
           syncLogService.log(`${progress} Nenhum metadado encontrado no TMDB para "${item.title}".`, 'warn');
         }
       }
-      
+
       const enrichedItem = {
         ...item,
         posterUrl: metadata?.posterUrl,

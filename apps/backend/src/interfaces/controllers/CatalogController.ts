@@ -39,7 +39,18 @@ export class CatalogController {
 
   async getCatalog(req: Request, res: Response): Promise<void> {
     try {
+      const { search, kind } = req.query;
       const catalogRepository = new PrismaCatalogRepository();
+
+      if (search || kind) {
+        const items = await catalogRepository.findAll({
+          search: search as string,
+          kind: kind as 'film' | 'series',
+        });
+        res.status(200).json({ items, syncedAt: new Date().toISOString() });
+        return;
+      }
+
       const catalog = await catalogRepository.findLatest();
 
       if (!catalog) {

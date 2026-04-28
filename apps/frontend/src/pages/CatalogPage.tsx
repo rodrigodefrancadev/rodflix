@@ -17,6 +17,7 @@ import { CatalogCard } from '../components/CatalogCard';
 import { CatalogHeader } from '../components/CatalogHeader';
 import { CatalogHero } from '../components/CatalogHero';
 import { Footer } from '../components/Footer';
+import { CatalogSkeleton } from '../components/CatalogSkeleton';
 import { isItemWatched } from '../utils/catalog';
 
 export function CatalogPage() {
@@ -44,6 +45,8 @@ export function CatalogPage() {
   const handlePlay = (id: string, title: string) => {
     setPlayingVideo({ id, title });
   };
+
+  if (isLoading) return <CatalogSkeleton />;
 
   return (
     <div className="min-h-screen text-white pb-20" style={{ backgroundColor: '#0A0A0A' }}>
@@ -91,13 +94,8 @@ export function CatalogPage() {
         )}
 
         <div className={`px-6 ${searchQuery.trim() === '' ? '-mt-16' : 'pt-24'} relative z-10 space-y-12`}>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 text-red-500 animate-spin" />
-            </div>
-          ) : (
-            <>
-              {searchQuery.trim() !== '' ? (
+          <>
+            {searchQuery.trim() !== '' ? (
                 <section className="rfl-animate-fade-in">
                   <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3">
                     <Search className="w-6 h-6 text-red-500" />
@@ -185,8 +183,7 @@ export function CatalogPage() {
                   )}
                 </>
               )}
-            </>
-          )}
+          </>
         </div>
       </main>
 

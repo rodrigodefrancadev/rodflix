@@ -64,60 +64,24 @@ export class PrismaCatalogRepository implements ICatalogRepository {
   }
 
   async findLatest(): Promise<Catalog | null> {
-    const dbItems = await prisma.catalogItem.findMany({
-      include: {
-        seasons: {
-          include: {
-            episodes: { orderBy: { number: 'asc' } },
-          },
-          orderBy: { number: 'asc' },
-        },
-      },
-    });
-
-    if (dbItems.length === 0) return null;
-
-    const items: CatalogItem[] = dbItems.map((dbItem) => {
-      const base = {
-        title: dbItem.title,
-        driveFolderId: dbItem.folderId,
-        existingId: dbItem.id,
-        year: dbItem.year ?? undefined,
-        posterUrl: dbItem.posterUrl ?? undefined,
-        bannerUrl: dbItem.bannerUrl ?? undefined,
-        description: dbItem.description ?? undefined,
-        tmdbRaw: dbItem.tmdbRaw ?? undefined,
-      };
-
-      if (dbItem.type === 'FILM') {
-        return {
-          kind: 'film' as const,
-          ...base,
-          driveFileId: dbItem.fileUrl ?? '',
-        };
-      }
-
-      return {
-        kind: 'series' as const,
-        ...base,
-        seasons: dbItem.seasons.map((s) => ({
-          number: s.number,
-          title: s.title ?? `Temporada ${s.number}`,
-          episodes: s.episodes.map((e) => ({
-            title: e.title ?? `Episódio ${e.number}`,
-            driveFileId: e.fileUrl,
-            order: e.number,
-          })),
-        })),
-      };
-    });
-
+    const items = await this.findAll();
+    if (items.length === 0) return null;
     return { items, syncedAt: new Date().toISOString() };
   }
 
-  async findById(id: string): Promise<CatalogItem | null> {
-    const dbItem = await prisma.catalogItem.findUnique({
-      where: { id },
+  async findAll(filter?: { search?: string; kind?: 'film' | 'series' }): Promise<CatalogItem[]> {
+    const where: any = {};
+
+    if (filter?.search) {
+      where.title = { contains: filter.search, mode: 'insensitive' };
+    }
+
+    if (filter?.kind) {
+      where.type = filter.kind === 'film' ? 'FILM' : 'SERIES';
+    }
+
+    const dbItems = await prisma.catalogItem.findMany({
+      where,
       include: {
         seasons: {
           include: {
@@ -126,10 +90,13 @@ export class PrismaCatalogRepository implements ICatalogRepository {
           orderBy: { number: 'asc' },
         },
       },
+      orderBy: { title: 'asc' },
     });
 
-    if (!dbItem) return null;
+    return dbItems.map((dbItem) => this.mapToCatalogItem(dbItem));
+  }
 
+  private mapToCatalogItem(dbItem: any): CatalogItem {
     const base = {
       title: dbItem.title,
       driveFolderId: dbItem.folderId,
@@ -152,15 +119,32 @@ export class PrismaCatalogRepository implements ICatalogRepository {
     return {
       kind: 'series' as const,
       ...base,
-      seasons: dbItem.seasons.map((s) => ({
+      seasons: (dbItem.seasons || []).map((s: any) => ({
         number: s.number,
         title: s.title ?? `Temporada ${s.number}`,
-        episodes: s.episodes.map((e) => ({
+        episodes: (s.episodes || []).map((e: any) => ({
           title: e.title ?? `Episódio ${e.number}`,
           driveFileId: e.fileUrl,
           order: e.number,
         })),
       })),
     };
+  }
+
+  async findById(id: string): Promise<CatalogItem | null> {
+    const dbItem = await prisma.catalogItem.findUnique({
+      where: { id },
+      include: {
+        seasons: {
+          include: {
+            episodes: { orderBy: { number: 'asc' } },
+          },
+          orderBy: { number: 'asc' },
+        },
+      },
+    });
+
+    if (!dbItem) return null;
+    return this.mapToCatalogItem(dbItem);
   }
 }

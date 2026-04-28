@@ -52,8 +52,16 @@ export interface TitleDetails {
 }
 
 export const catalogApi = {
-  getCatalog: async () => {
-    const response = await axios.get<{ items: CatalogItem[] }>(`${API_URL}/catalog`, {
+  getCatalog: async (params?: { search?: string; kind?: string }) => {
+    let url = `${API_URL}/catalog`;
+    if (params) {
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append('search', params.search);
+      if (params.kind && params.kind !== 'all') queryParams.append('kind', params.kind);
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
+    }
+    const response = await axios.get<{ items: CatalogItem[] }>(url, {
       headers: getAuthHeader(),
     });
     return response.data.items;

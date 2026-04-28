@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { catalogApi } from '../api/catalog';
 import type { CatalogItem } from '../api/catalog';
@@ -43,30 +43,47 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [featuredItem, setFeaturedItem] = useState<CatalogItem | undefined>();
   const [ratings, setRatings] = useState<Record<string, RatingType>>({});
-  const isInitialized = useRef(false);
 
-  const fetchCatalog = async () => {
+  const fetchUserData = async () => {
     try {
-      setIsLoading(true);
-      const [catalogData, watchedData, ratingsData, featuredData] = await Promise.all([
-        catalogApi.getCatalog(),
+      const [watchedData, ratingsData] = await Promise.all([
         watchedApi.getWatched(),
-        ratingApi.getRatings(),
-        catalogApi.getFeatured()
+        ratingApi.getRatings()
       ]);
-      setItems(catalogData);
       setWatchedIds(new Set(watchedData.map(w => w.refId)));
-      setFeaturedItem(featuredData);
-      
       const ratingsMap: Record<string, RatingType> = {};
       ratingsData.forEach(r => ratingsMap[r.catalogItemId] = r.type);
       setRatings(ratingsMap);
     } catch (error) {
-      console.error('Failed to fetch catalog or watched status', error);
+      console.error('Failed to fetch user data', error);
+    }
+  };
+
+  const fetchCatalog = async (params?: { search?: string; kind?: string }) => {
+    try {
+      setIsLoading(true);
+      // We only fetch featured item on initial load or sync
+      const promises: [Promise<CatalogItem[]>, Promise<CatalogItem | undefined>?] = [
+        catalogApi.getCatalog(params)
+      ];
+      
+      if (!featuredItem) {
+        promises.push(catalogApi.getFeatured());
+      }
+
+      const [catalogData, featuredData] = await Promise.all(promises);
+      setItems(catalogData);
+      if (featuredData) setFeaturedItem(featuredData);
+    } catch (error) {
+      console.error('Failed to fetch catalog', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   const toggleWatched = async (refId: string, kind: 'FILM' | 'EPISODE') => {
     try {
@@ -111,27 +128,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Debounce search
   useEffect(() => {
-    if (!isInitialized.current) {
-      fetchCatalog();
-      isInitialized.current = true;
-    }
-  }, []);
+    const timer = setTimeout(() => {
+      fetchCatalog({ search: searchQuery, kind: activeFilter });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeFilter]);
 
-  const films = items.filter(i =>
-    i.kind === 'film' &&
-    (searchQuery === '' || i.title.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-  const series = items.filter(i =>
-    i.kind === 'series' &&
-    (searchQuery === '' || i.title.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const filteredItems = items.filter(item => {
-    const matchesFilter = activeFilter === 'all' ? true : item.kind === activeFilter;
-    const matchesSearch = searchQuery === '' || item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const films = items.filter(i => i.kind === 'film');
+  const series = items.filter(i => i.kind === 'series');
+  const filteredItems = items;
 
   const displayFeaturedItem = (featuredItem && filteredItems.some(i => i.existingId === featuredItem.existingId))
     ? featuredItem
