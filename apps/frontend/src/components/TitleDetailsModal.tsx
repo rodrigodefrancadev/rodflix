@@ -93,7 +93,7 @@ export function TitleDetailsModal({
       document.body.style.overflow = 'hidden';
       if (item.kind === 'series') setSelectedSeason(item.seasons[0]);
       setFullTmdb(item.tmdbRaw || null);
-      
+
       // Scroll to top when item changes
       modalRef.current?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -213,6 +213,8 @@ export function TitleDetailsModal({
                 <Play className="w-6 h-6 fill-black" />
                 Assistir
               </button>
+
+              {/* Botão Marcar como Visto/Não Visto */}
               <button
                 onClick={() => onToggleWatched(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || ''), item.kind === 'film' ? 'FILM' : 'EPISODE')}
                 className="flex flex-col items-center gap-1 min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/watch"
@@ -224,53 +226,55 @@ export function TitleDetailsModal({
                   {watchedIds.has(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || '')) ? 'Assistido' : 'Marcar visto'}
                 </span>
               </button>
-              <div className="relative" onMouseLeave={() => setShowRatingMenu(false)}>
-                <button 
-                  onMouseEnter={() => setShowRatingMenu(true)}
+
+              {/* Botão Avaliar */}
+              <div className="relative">
+                <button
                   onClick={() => setShowRatingMenu(!showRatingMenu)}
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border transition-colors backdrop-blur-md ${rating ? 'bg-white text-black border-white' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+                  className="flex flex-col items-center gap-1 min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/rating"
                 >
-                  {rating === 'LIKE' && <ThumbsUp className="w-5 h-5 fill-black" />}
-                  {rating === 'LOVE' && <Heart className="w-5 h-5 fill-red-500 text-red-500" />}
-                  {rating === 'DISLIKE' && <ThumbsDown className="w-5 h-5 fill-black" />}
-                  {!rating && <ThumbsUp className="w-5 h-5" />}
+                  <div className={`p-2 rounded-full border transition-colors backdrop-blur-md ${rating ? 'bg-white text-black border-white' : 'border-white/40 text-white opacity-40 group-hover/rating:opacity-100'}`}>
+                    {rating === 'LIKE' && <ThumbsUp className="w-5 h-5 fill-black" />}
+                    {rating === 'LOVE' && <Heart className="w-5 h-5 fill-red-500 text-red-500" />}
+                    {rating === 'DISLIKE' && <ThumbsDown className="w-5 h-5 fill-black" />}
+                    {!rating && <ThumbsUp className="w-5 h-5" />}
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-tighter transition-opacity ${rating ? 'text-white' : 'opacity-50 group-hover/rating:opacity-100'}`}>
+                    {!rating ? 'Avaliar' : (rating === 'LIKE' ? 'Gostei' : (rating === 'LOVE' ? 'Amei' : 'Não Gostei'))}
+                  </span>
                 </button>
 
                 {showRatingMenu && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#2b2b2b] p-1.5 rounded-full flex items-center gap-1 shadow-xl animate-in slide-in-from-bottom-2 fade-in">
-                    <button 
-                      onClick={() => { onRate?.('DISLIKE'); setShowRatingMenu(false); }}
-                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'DISLIKE' ? 'text-white' : 'text-white/50'}`}
-                      title="Não Gostei"
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#2b2b2b] p-2 rounded-2xl flex items-center gap-2 shadow-xl animate-in slide-in-from-bottom-2 fade-in">
+                    <button
+                      onClick={() => { onRate?.(rating === 'DISLIKE' ? null : 'DISLIKE'); setShowRatingMenu(false); }}
+                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors hover:bg-white/10 group/dislike"
                     >
-                      <ThumbsDown className={`w-6 h-6 ${rating === 'DISLIKE' ? 'fill-white' : ''}`} />
+                      <div className={`p-2 rounded-full transition-transform group-hover/dislike:scale-110 ${rating === 'DISLIKE' ? 'bg-white text-black' : 'text-white/50'}`}>
+                        <ThumbsDown className={`w-6 h-6 ${rating === 'DISLIKE' ? 'fill-black' : ''}`} />
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-tight ${rating === 'DISLIKE' ? 'text-white' : 'text-white/40'}`}>Não Gostei</span>
                     </button>
-                    <button 
-                      onClick={() => { onRate?.('LIKE'); setShowRatingMenu(false); }}
-                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'LIKE' ? 'text-white' : 'text-white/50'}`}
-                      title="Gostei"
+
+                    <button
+                      onClick={() => { onRate?.(rating === 'LIKE' ? null : 'LIKE'); setShowRatingMenu(false); }}
+                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors hover:bg-white/10 group/like"
                     >
-                      <ThumbsUp className={`w-6 h-6 ${rating === 'LIKE' ? 'fill-white' : ''}`} />
+                      <div className={`p-2 rounded-full transition-transform group-hover/like:scale-110 ${rating === 'LIKE' ? 'bg-white text-black' : 'text-white/50'}`}>
+                        <ThumbsUp className={`w-6 h-6 ${rating === 'LIKE' ? 'fill-black' : ''}`} />
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-tight ${rating === 'LIKE' ? 'text-white' : 'text-white/40'}`}>Gostei</span>
                     </button>
-                    <button 
-                      onClick={() => { onRate?.('LOVE'); setShowRatingMenu(false); }}
-                      className={`p-3 rounded-full transition-transform hover:scale-110 hover:bg-white/10 ${rating === 'LOVE' ? 'text-red-500' : 'text-white/50'}`}
-                      title="Gostei Muito"
+
+                    <button
+                      onClick={() => { onRate?.(rating === 'LOVE' ? null : 'LOVE'); setShowRatingMenu(false); }}
+                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-colors hover:bg-white/10 group/love"
                     >
-                      <Heart className={`w-6 h-6 ${rating === 'LOVE' ? 'fill-red-500' : ''}`} />
+                      <div className={`p-2 rounded-full transition-transform group-hover/love:scale-110 ${rating === 'LOVE' ? 'bg-white' : 'text-white/50'}`}>
+                        <Heart className={`w-6 h-6 ${rating === 'LOVE' ? 'fill-red-500 text-red-500' : ''}`} />
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-tight ${rating === 'LOVE' ? 'text-white' : 'text-white/40'}`}>Amei</span>
                     </button>
-                    {rating && (
-                       <div className="w-px h-6 bg-white/20 mx-1"></div>
-                    )}
-                    {rating && (
-                      <button 
-                        onClick={() => { onRate?.(null); setShowRatingMenu(false); }}
-                        className="p-2 rounded-full transition-transform hover:scale-110 hover:bg-white/10 text-white/50"
-                        title="Remover Avaliação"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -382,7 +386,7 @@ export function TitleDetailsModal({
         <div className="px-12 pb-12">
           <h3 className="text-2xl font-bold mb-6">Títulos Semelhantes</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {rankedSimilarTitles.map(({ similar, score }) => (
+            {rankedSimilarTitles.map(({ similar }) => (
               <div
                 key={similar.existingId}
                 onClick={() => {
@@ -396,11 +400,10 @@ export function TitleDetailsModal({
               >
                 <div className="aspect-video relative">
                   <img src={similar.bannerUrl || similar.posterUrl} className="w-full h-full object-cover" alt="" />
-                  <div className="absolute top-2 right-2 text-xs font-bold px-1 bg-black/40 rounded">HD</div>
                 </div>
                 <div className="p-4 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-green-500">{similar.title}</span>
+                    <span className="text-[10px] font-bold">{similar.title}</span>
                     <span className="text-xs text-white/40">{similar.year}</span>
                   </div>
                   <p className="text-[10px] text-white/60 line-clamp-3">

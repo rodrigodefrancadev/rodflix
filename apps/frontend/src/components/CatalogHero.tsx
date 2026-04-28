@@ -39,7 +39,6 @@ export function CatalogHero({
     >
       <div className="max-w-xl">
         <div className="flex items-center gap-2 mb-4">
-          <div className="rfl-badge-red uppercase tracking-tighter font-black text-[10px]">Destaque</div>
           {featuredItem.year && (
             <span className="text-xs font-bold text-white/60">{featuredItem.year}</span>
           )}
