@@ -34,9 +34,16 @@ export function TitleDetailsModal({
   const [isLoading, setIsLoading] = useState(true);
   const [showRatingMenu, setShowRatingMenu] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const lastFetchedId = useRef<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      if (item.existingId === lastFetchedId.current) {
+        setIsLoading(false);
+        return;
+      }
+      lastFetchedId.current = item.existingId;
+
       document.body.style.overflow = 'hidden';
       // Scroll to top when item changes
       modalRef.current?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });

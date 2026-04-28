@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { catalogApi } from '../api/catalog';
 import type { CatalogItem } from '../api/catalog';
@@ -43,6 +43,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [featuredItem, setFeaturedItem] = useState<CatalogItem | undefined>();
   const [ratings, setRatings] = useState<Record<string, RatingType>>({});
+  const isInitialized = useRef(false);
 
   const fetchCatalog = async () => {
     try {
@@ -111,7 +112,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCatalog();
+    if (!isInitialized.current) {
+      fetchCatalog();
+      isInitialized.current = true;
+    }
   }, []);
 
   const films = items.filter(i =>
