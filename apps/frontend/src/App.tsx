@@ -7,6 +7,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { CatalogPage } from './pages/CatalogPage';
 import { CatalogProvider } from './contexts/CatalogContext';
 import { AdminPage } from './pages/AdminPage';
+import { MembersPage } from './pages/MembersPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 function App() {
   return (
@@ -22,6 +24,26 @@ function App() {
               <ProtectedRoute>
                 <CatalogProvider>
                   <CatalogPage />
+                </CatalogProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/members"
+            element={
+              <ProtectedRoute>
+                <CatalogProvider>
+                  <MembersPage />
+                </CatalogProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:userId"
+            element={
+              <ProtectedRoute>
+                <CatalogProvider>
+                  <ProfilePage />
                 </CatalogProvider>
               </ProtectedRoute>
             }

@@ -8,7 +8,6 @@ export interface ExternalMetadata {
 }
 
 export class MetadataService {
-  private readonly apiKey = process.env.TMDB_API_KEY;
   private readonly token = process.env.TMDB_TOKEN;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
 

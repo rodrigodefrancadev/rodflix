@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Search, X, ChevronDown, LogOut, Menu } from 'lucide-react';
+import { ShieldCheck, Search, X, ChevronDown, LogOut, Menu, Users, UserCircle } from 'lucide-react';
 import { useCatalog } from '../contexts/CatalogContext';
 
 type UserLocal = {
@@ -66,6 +66,13 @@ export function CatalogHeader({ isAdmin, user, logout }: CatalogHeaderProps) {
           >
             Séries
           </button>
+          <Link
+            to="/members"
+            className="flex items-center gap-1.5 font-medium text-white/50 hover:text-white transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Membros
+          </Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1.5 font-medium transition-colors hover:opacity-80" style={{ color: '#E50914' }}>
               <ShieldCheck className="w-4 h-4" />
@@ -120,6 +127,15 @@ export function CatalogHeader({ isAdmin, user, logout }: CatalogHeaderProps) {
               <p className="text-xs font-bold">{user?.name}</p>
               <p className="text-[10px] truncate opacity-40">{user?.email}</p>
             </div>
+            {user?.id && (
+              <Link
+                to={`/profile/${user.id}`}
+                className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-white/5 hover:text-red-500 transition-colors"
+              >
+                <UserCircle className="w-4 h-4" />
+                Meu Perfil
+              </Link>
+            )}
             <button
               onClick={logout}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-white/5 hover:text-red-500 transition-colors"
@@ -152,6 +168,14 @@ export function CatalogHeader({ isAdmin, user, logout }: CatalogHeaderProps) {
           >
             Séries
           </button>
+          <Link
+            to="/members"
+            className="flex items-center gap-2 text-left font-bold text-lg p-4 border-b border-white/5 text-white/50 hover:text-white"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Users className="w-5 h-5" />
+            Membros
+          </Link>
           {isAdmin && (
             <Link 
               to="/admin" 
