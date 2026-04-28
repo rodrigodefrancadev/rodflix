@@ -1,4 +1,4 @@
-import type { Catalog } from '../entities/Catalog';
+import type { Catalog, CatalogItem } from '../entities/Catalog';
 
 export interface ICatalogRepository {
   /**
@@ -12,4 +12,9 @@ export interface ICatalogRepository {
    * Returns null if no sync has been performed yet.
    */
   findLatest(): Promise<Catalog | null>;
+
+  /**
+   * Find a specific catalog item by its ID.
+   */
+  findById(id: string): Promise<CatalogItem | null>;
 }

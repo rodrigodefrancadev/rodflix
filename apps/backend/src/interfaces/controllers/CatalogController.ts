@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { SyncCatalogFromDriveUseCase } from '../../application/usecases/SyncCatalogFromDriveUseCase';
 import { GoogleDriveService } from '../../infrastructure/services/GoogleDriveService';
 import { PrismaCatalogRepository } from '../../infrastructure/repositories/PrismaCatalogRepository';
+import { GetFeaturedTitleUseCase } from '../../application/usecases/catalog/GetFeaturedTitleUseCase';
+import { GetTitleDetailsUseCase } from '../../application/usecases/catalog/GetTitleDetailsUseCase';
+import { GetSimilarTitlesUseCase } from '../../application/usecases/catalog/GetSimilarTitlesUseCase';
 
 export class CatalogController {
   async sync(req: Request, res: Response): Promise<void> {
@@ -87,6 +90,53 @@ export class CatalogController {
       }
     } catch (error: any) {
       console.error('[CatalogController.stream]', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+  async getFeatured(req: Request, res: Response): Promise<void> {
+    try {
+      const catalogRepository = new PrismaCatalogRepository();
+      const useCase = new GetFeaturedTitleUseCase(catalogRepository);
+      const featured = await useCase.execute();
+
+      if (!featured) {
+        res.status(404).json({ error: 'No featured title available' });
+        return;
+      }
+
+      res.status(200).json(featured);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getDetails(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const catalogRepository = new PrismaCatalogRepository();
+      const useCase = new GetTitleDetailsUseCase(catalogRepository);
+      const details = await useCase.execute(id as string);
+
+      if (!details) {
+        res.status(404).json({ error: 'Title not found' });
+        return;
+      }
+
+      res.status(200).json(details);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getSimilar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const catalogRepository = new PrismaCatalogRepository();
+      const useCase = new GetSimilarTitlesUseCase(catalogRepository);
+      const similar = await useCase.execute(id as string);
+
+      res.status(200).json(similar);
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   }

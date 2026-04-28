@@ -33,11 +33,50 @@ export type CatalogItem = {
   | { kind: 'series'; seasons: Season[] }
 );
 
+export interface TitleDetails {
+  id: string;
+  title: string;
+  description: string | null;
+  year: number | null;
+  posterUrl: string | null;
+  bannerUrl: string | null;
+  ageRating: string | null;
+  duration: string | null;
+  genres: string | null;
+  director: string | null;
+  cast: string | null;
+  tmdbRating: string | null;
+  seasons?: Season[];
+  kind: 'film' | 'series';
+  driveFileId?: string;
+}
+
 export const catalogApi = {
   getCatalog: async () => {
     const response = await axios.get<{ items: CatalogItem[] }>(`${API_URL}/catalog`, {
       headers: getAuthHeader(),
     });
     return response.data.items;
+  },
+
+  getFeatured: async () => {
+    const response = await axios.get<CatalogItem>(`${API_URL}/catalog/featured`, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  },
+
+  getDetails: async (id: string) => {
+    const response = await axios.get<TitleDetails>(`${API_URL}/catalog/${id}`, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
+  },
+
+  getSimilar: async (id: string) => {
+    const response = await axios.get<CatalogItem[]>(`${API_URL}/catalog/${id}/similar`, {
+      headers: getAuthHeader(),
+    });
+    return response.data;
   },
 };

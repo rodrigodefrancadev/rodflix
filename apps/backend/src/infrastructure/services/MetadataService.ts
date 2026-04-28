@@ -9,8 +9,7 @@ export interface ExternalMetadata {
 
 export class MetadataService {
   private readonly apiKey = process.env.TMDB_API_KEY;
-  // Using the provided Read Access Token for better reliability
-  private readonly token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZjljNDAwZWRlZjBhMGZlN2JiODQyZGU4ZTI1NThkNiIsIm5iZiI6MTc3NjkxNDY1MC4yMjIwMDAxLCJzdWIiOiI2OWU5OTBkYWYxY2FjNTY1OTIzMzQyN2MiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.Yvw1EDk5G2eDeLq_o4ENx7h3PHWzpIsKvZ6bT8Tdzc0';
+  private readonly token = process.env.TMDB_TOKEN;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
 
   async getMetadata(title: string, type: 'film' | 'series'): Promise<{ mapped: ExternalMetadata; raw: any } | null> {

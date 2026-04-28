@@ -114,4 +114,53 @@ export class PrismaCatalogRepository implements ICatalogRepository {
 
     return { items, syncedAt: new Date().toISOString() };
   }
+
+  async findById(id: string): Promise<CatalogItem | null> {
+    const dbItem = await prisma.catalogItem.findUnique({
+      where: { id },
+      include: {
+        seasons: {
+          include: {
+            episodes: { orderBy: { number: 'asc' } },
+          },
+          orderBy: { number: 'asc' },
+        },
+      },
+    });
+
+    if (!dbItem) return null;
+
+    const base = {
+      title: dbItem.title,
+      driveFolderId: dbItem.folderId,
+      existingId: dbItem.id,
+      year: dbItem.year ?? undefined,
+      posterUrl: dbItem.posterUrl ?? undefined,
+      bannerUrl: dbItem.bannerUrl ?? undefined,
+      description: dbItem.description ?? undefined,
+      tmdbRaw: dbItem.tmdbRaw ?? undefined,
+    };
+
+    if (dbItem.type === 'FILM') {
+      return {
+        kind: 'film' as const,
+        ...base,
+        driveFileId: dbItem.fileUrl ?? '',
+      };
+    }
+
+    return {
+      kind: 'series' as const,
+      ...base,
+      seasons: dbItem.seasons.map((s) => ({
+        number: s.number,
+        title: s.title ?? `Temporada ${s.number}`,
+        episodes: s.episodes.map((e) => ({
+          title: e.title ?? `Episódio ${e.number}`,
+          driveFileId: e.fileUrl,
+          order: e.number,
+        })),
+      })),
+    };
+  }
 }
