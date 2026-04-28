@@ -23,6 +23,7 @@ export interface ActivityItem {
   kind: 'film' | 'series';
   catalogItemId: string;
   watchedAt: string;
+  posterUrl?: string | null;
   episodesWatched?: number;
   totalEpisodes?: number;
   rating?: 'LIKE' | 'LOVE' | 'DISLIKE' | null;

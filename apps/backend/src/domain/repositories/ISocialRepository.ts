@@ -19,6 +19,7 @@ export interface ActivityItem {
   kind: 'film' | 'series';
   catalogItemId: string;
   watchedAt: Date;
+  posterUrl?: string | null;
   // For series aggregation
   episodesWatched?: number;
   totalEpisodes?: number;

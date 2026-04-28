@@ -53,6 +53,7 @@ export class PrismaSocialRepository implements ISocialRepository {
             kind: 'film',
             catalogItemId: item.id,
             watchedAt: watched.watchedAt,
+            posterUrl: item.posterUrl,
             rating: user.ratings.find(r => r.catalogItemId === item.id)?.type as any
           });
         }
@@ -95,6 +96,7 @@ export class PrismaSocialRepository implements ISocialRepository {
               kind: 'series',
               catalogItemId: series.id,
               watchedAt: watched.watchedAt,
+              posterUrl: series.posterUrl,
               episodesWatched: 1,
               totalEpisodes,
               rating: user.ratings.find(r => r.catalogItemId === series.id)?.type as any
@@ -104,7 +106,7 @@ export class PrismaSocialRepository implements ISocialRepository {
       }
     }
 
-    const activity = Array.from(activityMap.values()).sort((a, b) => 
+    const activity = Array.from(activityMap.values()).sort((a, b) =>
       b.watchedAt.getTime() - a.watchedAt.getTime()
     );
 

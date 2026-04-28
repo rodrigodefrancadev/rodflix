@@ -125,12 +125,23 @@ export function ProfilePage() {
             {profile.activity.map((item) => (
               <div 
                 key={item.id}
-                className="bg-[#141414] border border-white/5 rounded-2xl p-6 flex items-center gap-6 hover:bg-white/[0.02] transition-all group"
+                className="bg-[#141414] border border-white/5 rounded-2xl p-4 md:p-6 flex items-center gap-6 hover:bg-white/[0.02] transition-all group"
               >
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-                  item.kind === 'series' ? 'bg-blue-600/20 text-blue-500' : 'bg-red-600/20 text-red-500'
-                }`}>
-                  {item.kind === 'series' ? <Clapperboard className="w-8 h-8" /> : <Film className="w-8 h-8" />}
+                {/* POSTER / ICON */}
+                <div className="w-16 h-24 md:w-20 md:h-28 flex-shrink-0 relative overflow-hidden rounded-lg bg-[#1a1a1a]">
+                  {item.posterUrl ? (
+                    <img 
+                      src={item.posterUrl} 
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center ${
+                      item.kind === 'series' ? 'bg-blue-600/20 text-blue-500' : 'bg-red-600/20 text-red-500'
+                    }`}>
+                      {item.kind === 'series' ? <Clapperboard className="w-8 h-8" /> : <Film className="w-8 h-8" />}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1">
