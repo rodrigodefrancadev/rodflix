@@ -1,0 +1,18 @@
+name: Deploy Dev API
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'apps/api/**'
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify Deploy for API
+        run: |
+          curl --request GET \
+            --url "https://coolify.vps.atomotriz.com/api/v1/deploy?uuid=syc9lp073dapj3rw5qcx3ov2&force=false" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_DEPLOY_TOKEN }}"
