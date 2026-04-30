@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3333/api';
-
-const getAuthHeader = () => {
-  const token = localStorage.getItem('rodflix_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import apiClient from './apiClient';
 
 export type Episode = {
   title: string;
@@ -53,7 +46,7 @@ export interface TitleDetails {
 
 export const catalogApi = {
   getCatalog: async (params?: { search?: string; kind?: string }) => {
-    let url = `${API_URL}/catalog`;
+    let url = '/catalog';
     if (params) {
       const queryParams = new URLSearchParams();
       if (params.search) queryParams.append('search', params.search);
@@ -61,30 +54,22 @@ export const catalogApi = {
       const queryString = queryParams.toString();
       if (queryString) url += `?${queryString}`;
     }
-    const response = await axios.get<{ items: CatalogItem[] }>(url, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<{ items: CatalogItem[] }>(url);
     return response.data.items;
   },
 
   getFeatured: async () => {
-    const response = await axios.get<CatalogItem>(`${API_URL}/catalog/featured`, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<CatalogItem>('/catalog/featured');
     return response.data;
   },
 
   getDetails: async (id: string) => {
-    const response = await axios.get<TitleDetails>(`${API_URL}/catalog/${id}`, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<TitleDetails>(`/catalog/${id}`);
     return response.data;
   },
 
   getSimilar: async (id: string) => {
-    const response = await axios.get<CatalogItem[]>(`${API_URL}/catalog/${id}/similar`, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<CatalogItem[]>(`/catalog/${id}/similar`);
     return response.data;
   },
 };

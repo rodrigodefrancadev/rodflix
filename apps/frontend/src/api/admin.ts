@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3333/api';
-
-const getAuthHeader = () => {
-  const token = localStorage.getItem('rodflix_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import apiClient from './apiClient';
 
 export type User = {
   id: string;
@@ -18,37 +11,27 @@ export type User = {
 
 export const adminApi = {
   getUsers: async () => {
-    const response = await axios.get<{ users: User[] }>(`${API_URL}/admin/users`, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<{ users: User[] }>('/admin/users');
     return response.data.users;
   },
 
   approveUser: async (id: string) => {
-    const response = await axios.patch(`${API_URL}/admin/users/${id}/approve`, {}, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.patch(`/admin/users/${id}/approve`);
     return response.data;
   },
 
   blockUser: async (id: string) => {
-    const response = await axios.patch(`${API_URL}/admin/users/${id}/block`, {}, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.patch(`/admin/users/${id}/block`);
     return response.data;
   },
 
   setRole: async (id: string, role: string) => {
-    const response = await axios.patch(`${API_URL}/admin/users/${id}/role`, { role }, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.patch(`/admin/users/${id}/role`, { role });
     return response.data;
   },
 
   syncCatalog: async () => {
-    const response = await axios.post(`${API_URL}/catalog/sync`, {}, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.post('/catalog/sync');
     return response.data;
   },
 };

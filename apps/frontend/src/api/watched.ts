@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+import apiClient from './apiClient';
 
 export interface WatchedItem {
   refId: string;
@@ -10,19 +8,12 @@ export interface WatchedItem {
 
 export const watchedApi = {
   async getWatched(): Promise<WatchedItem[]> {
-    const token = localStorage.getItem('rodflix_token');
-    const response = await axios.get(`${API_URL}/watched`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiClient.get('/watched');
     return response.data.watched;
   },
 
   async toggleWatched(refId: string, kind: 'FILM' | 'EPISODE'): Promise<boolean> {
-    const token = localStorage.getItem('rodflix_token');
-    const response = await axios.post(`${API_URL}/watched/toggle`, 
-      { refId, kind },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await apiClient.post('/watched/toggle', { refId, kind });
     return response.data.watched;
   }
 };

@@ -1,26 +1,15 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3333/api';
-
-const getAuthHeader = () => {
-  const token = localStorage.getItem('rodflix_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import apiClient from './apiClient';
 
 export type RatingType = 'LIKE' | 'LOVE' | 'DISLIKE';
 
 export const ratingApi = {
   getRatings: async () => {
-    const response = await axios.get<{ ratings: { catalogItemId: string; type: RatingType }[] }>(`${API_URL}/ratings`, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.get<{ ratings: { catalogItemId: string; type: RatingType }[] }>('/ratings');
     return response.data.ratings;
   },
   
   setRating: async (catalogItemId: string, type: RatingType | null) => {
-    const response = await axios.post<{ rating: RatingType | null }>(`${API_URL}/ratings`, { catalogItemId, type }, {
-      headers: getAuthHeader(),
-    });
+    const response = await apiClient.post<{ rating: RatingType | null }>('/ratings', { catalogItemId, type });
     return response.data.rating;
   }
 };
