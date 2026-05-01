@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Play, Star, Shield, Users, ChevronRight, Film } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const features = [
   {
@@ -27,8 +28,13 @@ const features = [
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  if (isAuthenticated) {
+    return <Navigate to="/catalog" replace />;
+  }
 
   const handleCta = async (e: React.FormEvent) => {
     e.preventDefault();
