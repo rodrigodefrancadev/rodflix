@@ -6,6 +6,7 @@ import { adminRoutes } from './interfaces/routes/admin.routes';
 import { watchedRoutes } from './interfaces/routes/watched.routes';
 import { ratingRoutes } from './interfaces/routes/rating.routes';
 import { socialRoutes } from './interfaces/routes/social.routes';
+import { notificationRoutes } from './interfaces/routes/notification.routes';
 import { prisma } from './infrastructure/prisma';
 
 const app = express();
@@ -60,6 +61,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/watched', watchedRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/social', socialRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 export { app }; // Export app for testing
 

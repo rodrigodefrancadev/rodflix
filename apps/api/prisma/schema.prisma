@@ -24,6 +24,7 @@ model User {
 
   watched   WatchedItem[]
   ratings   Rating[]
+  notifications UserNotification[]
 }
 
 enum Role {
@@ -119,3 +120,24 @@ model Rating {
 
   @@unique([userId, catalogItemId])
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  
+  seenBy    UserNotification[]
+}
+
+model UserNotification {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  seenAt         DateTime     @default(now())
+  
+  @@unique([userId, notificationId])
+}
+

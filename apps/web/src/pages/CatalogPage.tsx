@@ -13,6 +13,7 @@ import type { CatalogItem } from '../api/catalog';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { TitleDetailsModal } from '../components/TitleDetailsModal';
 import { useSearchParams } from 'react-router-dom';
+import { notificationApi, type Notification } from '../api/notification';
 
 import { CatalogCard } from '../components/CatalogCard';
 import { CatalogHeader } from '../components/CatalogHeader';
@@ -43,6 +44,26 @@ export function CatalogPage() {
   const [playingVideo, setPlayingVideo] = useState<{ id: string; title: string } | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<CatalogItem | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
+
+  useEffect(() => {
+    notificationApi.getActive().then(notification => {
+      if (notification) {
+        setActiveNotification(notification);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const handleMarkNotificationSeen = async () => {
+    if (activeNotification) {
+      try {
+        await notificationApi.markSeen(activeNotification.id);
+        setActiveNotification(null);
+      } catch (err) {
+        console.error('Failed to mark notification as seen', err);
+      }
+    }
+  };
 
   // Sync selectedTitle with URL
   useEffect(() => {
@@ -230,6 +251,27 @@ export function CatalogPage() {
           rating={ratings[selectedTitle.existingId] || null}
           onRate={(type) => handleRate(selectedTitle.existingId, type)}
         />
+      )}
+
+      {/* NOTIFICATION ALERT */}
+      {activeNotification && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 px-4 rfl-animate-fade-in">
+          <div className="bg-[#141414] rounded-2xl p-8 max-w-lg w-full shadow-[0_0_50px_rgba(229,9,20,0.15)] border border-white/10 rfl-animate-slide-up text-center">
+            <h2 className="text-3xl font-black mb-4 uppercase tracking-wider text-white">
+              {activeNotification.title}
+            </h2>
+            <div className="w-16 h-1 bg-red-600 mx-auto mb-6 rounded-full"></div>
+            <p className="text-white/80 text-lg leading-relaxed mb-8 whitespace-pre-wrap">
+              {activeNotification.content}
+            </p>
+            <button
+              onClick={handleMarkNotificationSeen}
+              className="rfl-btn-primary w-full text-lg py-4 shadow-lg shadow-red-500/20"
+            >
+              Estou ciente. Não mostrar mais.
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

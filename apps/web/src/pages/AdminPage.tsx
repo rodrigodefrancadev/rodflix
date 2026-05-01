@@ -9,9 +9,11 @@ import {
   ChevronLeft,
   Search,
   Filter,
-  Calendar
+  Calendar,
+  Bell
 } from 'lucide-react';
 import { adminApi } from '../api/admin';
+import { notificationApi } from '../api/notification';
 import type { User } from '../api/admin';
 import { Terminal, type LogEntry } from '../components/Terminal';
 
@@ -23,6 +25,10 @@ export function AdminPage() {
   const [syncStatus, setSyncStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [showTerminal, setShowTerminal] = useState(false);
+
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationForm, setNotificationForm] = useState({ title: '', content: '' });
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -114,6 +120,21 @@ export function AdminPage() {
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleCreateNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSendingNotification(true);
+      await notificationApi.create(notificationForm);
+      setSyncStatus({ message: 'Notificação enviada com sucesso!', type: 'success' });
+      setShowNotificationModal(false);
+      setNotificationForm({ title: '', content: '' });
+    } catch (error) {
+      setSyncStatus({ message: 'Erro ao enviar notificação.', type: 'error' });
+    } finally {
+      setIsSendingNotification(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: '#0A0A0A' }}>
       {/* NAV */}
@@ -127,6 +148,14 @@ export function AdminPage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+           <button 
+            onClick={() => setShowNotificationModal(true)} 
+            className="rfl-btn-secondary gap-2"
+            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+          >
+            <Bell className="w-4 h-4" />
+            Nova Notificação
+          </button>
            <button 
             onClick={handleSync} 
             disabled={isSyncing} 
@@ -301,6 +330,58 @@ export function AdminPage() {
         logs={logs} 
         onClose={() => setShowTerminal(false)} 
       />
+
+      {/* NOTIFICATION MODAL */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 rfl-animate-fade-in">
+          <div className="bg-[#181818] rounded-xl p-8 max-w-md w-full shadow-2xl rfl-animate-slide-up border border-white/5">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Bell className="w-6 h-6 text-red-500" />
+              Enviar Notificação
+            </h2>
+            <form onSubmit={handleCreateNotification} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-white/60 mb-1">Título</label>
+                <input
+                  type="text"
+                  required
+                  value={notificationForm.title}
+                  onChange={(e) => setNotificationForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="rfl-input w-full"
+                  placeholder="Ex: Nova Série Adicionada!"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-white/60 mb-1">Conteúdo</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={notificationForm.content}
+                  onChange={(e) => setNotificationForm(prev => ({ ...prev, content: e.target.value }))}
+                  className="rfl-input w-full resize-none"
+                  placeholder="Detalhes da notificação..."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNotificationModal(false)}
+                  className="rfl-btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingNotification}
+                  className="rfl-btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  {isSendingNotification ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Enviar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
