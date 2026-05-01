@@ -270,7 +270,7 @@ export function TitleDetailsModal({
                       className="bg-[#242424] border border-white/20 px-4 py-2 rounded text-sm font-bold focus:outline-none"
                     >
                       {(details?.seasons || item.seasons).map(s => (
-                        <option key={s.number} value={s.number}>Temporada {s.number}</option>
+                        <option key={s.number} value={s.number}>{s.title || `Temporada ${s.number}`}</option>
                       ))}
                     </select>
                   </div>

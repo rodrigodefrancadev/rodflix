@@ -221,8 +221,12 @@ export class GoogleDriveService implements IDriveService {
       const episodes = await this.buildEpisodes(sf.id!);
       if (episodes.length === 0) continue;
 
+      // Try to parse season number from the folder name
+      const match = sf.name?.match(/\d+/);
+      const number = match ? parseInt(match[0], 10) : i + 1;
+
       seasons.push({
-        number: i + 1,
+        number,
         title: sf.name!,
         episodes,
       });
@@ -240,11 +244,21 @@ export class GoogleDriveService implements IDriveService {
       (a.name ?? '').localeCompare(b.name ?? '', undefined, { numeric: true })
     );
 
-    return sorted.map((v, idx) => ({
-      title: v.name!,
-      driveFileId: v.id!,
-      order: idx + 1,
-      thumbnailLink: v.thumbnailLink ?? undefined,
-    }));
+    return sorted.map((v, idx) => {
+      // Try to parse episode number from file name
+      // Matches things like "Episódio 05", "S01E05", or just a number
+      const orderMatch = v.name?.match(/(?:[eE]p?(?:is[oó]dio)?\s*|(?<=[sS]\d{2}[eE]))(\d+)/) || v.name?.match(/\d+/);
+      const order = orderMatch ? parseInt(orderMatch[1] || orderMatch[0], 10) : idx + 1;
+
+      // Remove file extension
+      const title = v.name?.replace(/\.[^/.]+$/, "") ?? `Episódio ${order}`;
+
+      return {
+        title,
+        driveFileId: v.id!,
+        order,
+        thumbnailLink: v.thumbnailLink ?? undefined,
+      };
+    });
   }
 }
