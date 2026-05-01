@@ -95,13 +95,12 @@ export function TitleDetailsModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto pt-10 pb-20 px-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-0 md:pt-10 md:pb-20 md:px-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
       onClick={handleBackdropClick}
     >
       <div
         ref={modalRef}
-        className="relative w-full max-w-4xl bg-[#181818] rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300"
-        style={{ minHeight: '80vh' }}
+        className="relative w-full max-w-4xl bg-[#181818] rounded-none md:rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 min-h-screen md:min-h-[80vh]"
       >
         {/* CLOSE BUTTON */}
         <button
@@ -120,21 +119,21 @@ export function TitleDetailsModal({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-black/30" />
 
-          <div className="absolute bottom-10 left-12 right-12">
-            <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter drop-shadow-lg">{item.title}</h1>
-            <div className="flex items-center gap-4">
+          <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-12 md:right-12">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black mb-4 md:mb-6 tracking-tighter drop-shadow-lg break-words line-clamp-3">{item.title}</h1>
+            <div className="flex flex-wrap items-center gap-3 md:gap-4">
               <button
                 onClick={handlePlayMain}
-                className="flex items-center gap-2 px-8 py-3 bg-white text-black font-bold rounded hover:bg-white/90 transition-colors"
+                className="flex items-center gap-2 px-6 md:px-8 py-2 md:py-3 bg-white text-black font-bold rounded hover:bg-white/90 transition-colors"
               >
-                <Play className="w-6 h-6 fill-black" />
+                <Play className="w-5 h-5 md:w-6 md:h-6 fill-black" />
                 Assistir
               </button>
 
               {/* Botão Marcar como Visto/Não Visto */}
               <button
                 onClick={() => onToggleWatched(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || ''), item.kind === 'film' ? 'FILM' : 'EPISODE')}
-                className="flex flex-col items-center gap-1 min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/watch"
+                className="flex flex-col items-center gap-1 min-w-[70px] md:min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/watch"
               >
                 <div className={`p-2 rounded-full border transition-colors ${watchedIds.has(item.kind === 'film' ? item.existingId : (selectedSeason?.episodes[0]?.driveFileId || '')) ? 'bg-green-600 border-green-500 text-white' : 'border-white/40 text-white opacity-40 group-hover/watch:opacity-100'}`}>
                   <Check className="w-5 h-5" />
@@ -148,7 +147,7 @@ export function TitleDetailsModal({
               <div className="relative">
                 <button
                   onClick={() => setShowRatingMenu(!showRatingMenu)}
-                  className="flex flex-col items-center gap-1 min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/rating"
+                  className="flex flex-col items-center gap-1 min-w-[70px] md:min-w-[90px] p-2 rounded hover:bg-white/10 transition-colors group/rating"
                 >
                   <div className={`p-2 rounded-full border transition-colors backdrop-blur-md ${rating ? 'bg-white text-black border-white' : 'border-white/40 text-white opacity-40 group-hover/rating:opacity-100'}`}>
                     {rating === 'LIKE' && <ThumbsUp className="w-5 h-5 fill-black" />}
@@ -200,7 +199,7 @@ export function TitleDetailsModal({
         </div>
 
         {/* CONTENT */}
-        <div className="px-12 py-8 min-h-[400px]">
+        <div className="px-6 py-6 md:px-12 md:py-8 min-h-[400px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-12 h-12 text-white/20 animate-spin" />
@@ -208,7 +207,7 @@ export function TitleDetailsModal({
             </div>
           ) : (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+              <div className="flex flex-col md:grid md:grid-cols-3 gap-8 md:gap-12 mb-12">
                 {/* LEFT: Info */}
                 <div className="md:col-span-2 space-y-6">
                   <div className="flex items-center gap-3 text-sm font-bold">
@@ -259,7 +258,7 @@ export function TitleDetailsModal({
               {/* EPISODES (for series) */}
               {item.kind === 'series' && (
                 <div className="pb-12">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                     <h3 className="text-2xl font-bold">Episódios</h3>
                     <select
                       value={selectedSeason?.number}
@@ -280,15 +279,17 @@ export function TitleDetailsModal({
                       <div
                         key={i}
                         onClick={() => onPlay(ep.driveFileId, `${item.title} - S${String(selectedSeason.number).padStart(2, '0')}E${String(ep.order).padStart(2, '0')}`)}
-                        className="group flex items-center gap-6 p-4 rounded-lg hover:bg-[#333] transition-colors cursor-pointer border-b border-white/5"
+                        className="group flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 rounded-lg hover:bg-[#333] transition-colors cursor-pointer border-b border-white/5"
                       >
-                        <span className="text-2xl font-bold text-white/40 group-hover:text-white w-8 text-center">{ep.order}</span>
-                        <div className="relative w-40 aspect-video rounded overflow-hidden bg-white/5">
-                          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
-                            <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex items-center gap-4 sm:contents">
+                          <span className="text-2xl font-bold text-white/40 group-hover:text-white w-8 text-center">{ep.order}</span>
+                          <div className="relative w-32 sm:w-40 aspect-video rounded overflow-hidden bg-white/5 flex-shrink-0">
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/5 to-white/10">
+                              <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 mt-2 sm:mt-0">
                           <div className="flex justify-between items-center mb-1">
                             <h4 className="font-bold">{ep.title || `Episódio ${ep.order}`}</h4>
                             <span className="text-sm text-white/40">45m</span>
@@ -297,7 +298,7 @@ export function TitleDetailsModal({
                             Sinopse do episódio não disponível. Assista agora para descobrir o que acontece nesta emocionante jornada.
                           </p>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center self-end sm:self-auto mt-2 sm:mt-0">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

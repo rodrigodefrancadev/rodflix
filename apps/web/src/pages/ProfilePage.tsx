@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { socialApi } from '../api/social';
 import type { UserProfile } from '../api/social';
 import { 
@@ -29,16 +29,24 @@ export function ProfilePage() {
 
   const [selectedTitle, setSelectedTitle] = useState<CatalogItem | null>(null);
   const [playingVideo, setPlayingVideo] = useState<{ id: string; title: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleOpenTitle = (catalogItemId: string) => {
-    const item = items.find(i => i.existingId === catalogItemId);
+  useEffect(() => {
+    const titleId = searchParams.get('title');
+    if (titleId && items.length > 0) {
+      const found = items.find(i => i.existingId === titleId);
+      if (found) setSelectedTitle(found);
+    } else if (!titleId) {
+      setSelectedTitle(null);
+    }
+  }, [searchParams.get('title'), items]);
+
+  const handleSelectTitle = (item: CatalogItem | null) => {
     if (item) {
-      setSelectedTitle(item);
+      setSearchParams({ title: item.existingId }, { replace: false });
     } else {
-      // Fallback: If not found in current items (due to filtering), 
-      // we could fetch it, but for now let's show a toast or ignore.
-      // In a real app, we'd have a getTitleById in the context.
-      console.warn('Title not found in current catalog items');
+      searchParams.delete('title');
+      setSearchParams(searchParams, { replace: true });
     }
   };
 
@@ -156,7 +164,7 @@ export function ProfilePage() {
             {profile.activity.map((item) => (
               <div 
                 key={item.id}
-                onClick={() => handleOpenTitle(item.catalogItemId)}
+                onClick={() => handleSelectTitle({ existingId: item.catalogItemId } as CatalogItem)}
                 className="bg-[#141414] border border-white/5 rounded-2xl p-4 md:p-6 flex items-center gap-6 hover:bg-white/[0.02] transition-all group cursor-pointer"
               >
                 {/* POSTER / ICON */}
@@ -223,11 +231,11 @@ export function ProfilePage() {
         <TitleDetailsModal
           isOpen={!!selectedTitle}
           item={selectedTitle}
-          onClose={() => setSelectedTitle(null)}
+          onClose={() => handleSelectTitle(null)}
           onPlay={handlePlay}
           watchedIds={watchedIds}
           onToggleWatched={toggleWatched}
-          onSelectSimilar={setSelectedTitle}
+          onSelectSimilar={handleSelectTitle}
           rating={ratings[selectedTitle.existingId] || null}
           onRate={(type) => handleRate(selectedTitle.existingId, type)}
         />

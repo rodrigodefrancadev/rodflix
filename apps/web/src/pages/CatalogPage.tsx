@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Film,
   Search,
@@ -12,6 +12,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import type { CatalogItem } from '../api/catalog';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { TitleDetailsModal } from '../components/TitleDetailsModal';
+import { useSearchParams } from 'react-router-dom';
 
 import { CatalogCard } from '../components/CatalogCard';
 import { CatalogHeader } from '../components/CatalogHeader';
@@ -41,6 +42,32 @@ export function CatalogPage() {
   // Local UI states
   const [playingVideo, setPlayingVideo] = useState<{ id: string; title: string } | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<CatalogItem | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Sync selectedTitle with URL
+  useEffect(() => {
+    const titleId = searchParams.get('title');
+    if (titleId && !isLoading) {
+      const found = films.find(i => i.existingId === titleId) || series.find(i => i.existingId === titleId);
+      if (found) {
+        setSelectedTitle(found);
+      } else {
+        // If not found in current list (maybe search is active), we could fetch it, 
+        // but for now let's just clear the param or wait.
+      }
+    } else if (!titleId) {
+      setSelectedTitle(null);
+    }
+  }, [searchParams.get('title'), isLoading, films, series]);
+
+  const handleSelectTitle = (item: CatalogItem | null) => {
+    if (item) {
+      setSearchParams({ title: item.existingId }, { replace: false });
+    } else {
+      searchParams.delete('title');
+      setSearchParams(searchParams, { replace: true });
+    }
+  };
 
   const handlePlay = (id: string, title: string) => {
     setPlayingVideo({ id, title });
@@ -74,7 +101,7 @@ export function CatalogPage() {
               featuredItem={featuredItem}
               watchedIds={watchedIds}
               handlePlay={handlePlay}
-              setSelectedTitle={setSelectedTitle}
+              setSelectedTitle={handleSelectTitle}
             />
           ) : !isLoading && (
             <div className="h-[60vh] flex items-center justify-center flex-col gap-6 text-center">
@@ -106,7 +133,7 @@ export function CatalogPage() {
                       <CatalogCard
                         key={item.existingId}
                         item={item}
-                        onClick={setSelectedTitle}
+                        onClick={handleSelectTitle}
                         isWatched={isItemWatched(item, watchedIds)}
                       />
                     ))}
@@ -132,7 +159,7 @@ export function CatalogPage() {
                               <CatalogCard
                                 key={item.existingId}
                                 item={item}
-                                onClick={setSelectedTitle}
+                                onClick={handleSelectTitle}
                                 isWatched={isItemWatched(item, watchedIds)}
                               />
                             ))}
@@ -150,7 +177,7 @@ export function CatalogPage() {
                               <CatalogCard
                                 key={item.existingId}
                                 item={item}
-                                onClick={setSelectedTitle}
+                                onClick={handleSelectTitle}
                                 isWatched={isItemWatched(item, watchedIds)}
                               />
                             ))}
@@ -169,7 +196,7 @@ export function CatalogPage() {
                           <CatalogCard
                             key={item.existingId}
                             item={item}
-                            onClick={setSelectedTitle}
+                            onClick={handleSelectTitle}
                             isWatched={isItemWatched(item, watchedIds)}
                           />
                         ))}
@@ -195,11 +222,11 @@ export function CatalogPage() {
         <TitleDetailsModal
           isOpen={!!selectedTitle}
           item={selectedTitle}
-          onClose={() => setSelectedTitle(null)}
+          onClose={() => handleSelectTitle(null)}
           onPlay={handlePlay}
           watchedIds={watchedIds}
           onToggleWatched={toggleWatched}
-          onSelectSimilar={setSelectedTitle}
+          onSelectSimilar={handleSelectTitle}
           rating={ratings[selectedTitle.existingId] || null}
           onRate={(type) => handleRate(selectedTitle.existingId, type)}
         />
