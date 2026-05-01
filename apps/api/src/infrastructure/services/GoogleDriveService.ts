@@ -44,17 +44,19 @@ export class GoogleDriveService implements IDriveService {
     const items = await this.listChildren(folderId);
     return items
       .filter((f) => f.mimeType && VIDEO_MIME_TYPES.has(f.mimeType))
-      .map((f) => ({ 
-        id: f.id!, 
-        name: f.name!, 
-        mimeType: f.mimeType!, 
-        thumbnailLink: f.thumbnailLink ?? undefined 
+      .map((f) => ({
+        id: f.id!,
+        name: f.name!,
+        mimeType: f.mimeType!,
+        thumbnailLink: f.thumbnailLink ?? undefined
       }));
   }
 
   async buildCatalog(rootFolderId: string): Promise<CatalogItem[]> {
     const titleFolders = await this.listFolders(rootFolderId);
     const items: CatalogItem[] = [];
+
+    console.log("Pastas encontradas: ", titleFolders.map(x => x.name))
 
     for (const folder of titleFolders) {
       const item = await this.processTitleFolder(folder);
@@ -169,6 +171,7 @@ export class GoogleDriveService implements IDriveService {
   }
 
   private async processTitleFolder(folder: DriveFolder): Promise<CatalogItem | null> {
+    console.log(`\n--- Processando pasta de título: "${folder.name}" (${folder.id}) ---`);
     const allChildren = await this.listChildren(folder.id);
     const { existingId, year, tmdbFileId } = this.parseMarkers(allChildren);
 
@@ -178,6 +181,8 @@ export class GoogleDriveService implements IDriveService {
     const videoFiles = allChildren.filter(
       (f) => f.mimeType && VIDEO_MIME_TYPES.has(f.mimeType)
     );
+
+    console.log(`- Encontrados ${subFolders.length} subpastas e ${videoFiles.length} arquivos de vídeo diretamente na pasta.`);
 
     const base = {
       title: folder.name,
@@ -189,10 +194,15 @@ export class GoogleDriveService implements IDriveService {
 
     // ── Series: has sub-folders (each = a season) ──────────────
     if (subFolders.length > 0) {
+      console.log(`- Identificado como Série (possui subpastas). Mapeando temporadas...`);
       const seasons = await this.buildSeasons(subFolders);
-      if (seasons.length === 0) return null;
+      if (seasons.length === 0) {
+        console.log(`- AVISO: Nenhuma temporada válida encontrada para a série "${folder.name}". Ignorando...`);
+        return null;
+      }
 
       const series: Series = { kind: 'series', ...base, seasons };
+      console.log(`- SUCESSO: Série "${folder.name}" processada com ${seasons.length} temporadas.`);
       return series;
     }
 
@@ -201,10 +211,12 @@ export class GoogleDriveService implements IDriveService {
       // Prefer the first video alphabetically
       const video = videoFiles.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))[0];
       const film: Film = { kind: 'film', ...base, driveFileId: video.id!, driveThumbnailUrl: video.thumbnailLink ?? undefined };
+      console.log(`- SUCESSO: Filme "${folder.name}" processado (arquivo: ${video.name}).`);
       return film;
     }
 
     // Folder exists but has no videos or seasons yet — skip
+    console.log(`- IGNORADO: A pasta "${folder.name}" não possui subpastas de temporada nem arquivos de vídeo válidos na raiz.`);
     return null;
   }
 

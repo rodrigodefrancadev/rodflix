@@ -34,6 +34,10 @@ export function VideoPlayer({ fileId, title, onClose }: VideoPlayerProps) {
           title={title}
           allow="autoplay; fullscreen"
           allowFullScreen
+          // @ts-ignore - React type definition missing for webkitAllowFullScreen
+          webkitAllowFullScreen="true"
+          // @ts-ignore
+          mozAllowFullScreen="true"
         />
       </div>
     </div>
