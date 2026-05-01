@@ -64,7 +64,7 @@ export const NotificationController = {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { id: notificationId } = req.params;
+      const notificationId = req.params.id as string;
 
       const userNotification = await prisma.userNotification.upsert({
         where: {
