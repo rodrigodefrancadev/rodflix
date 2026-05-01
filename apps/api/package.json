@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:migrate:prod": "prisma migrate deploy",
     "test": "vitest run",
-    "promote-to-admin": "tsx -r dotenv/config scripts/promote-to-admin.ts"
+    "promote-to-admin": "tsx -r dotenv/config scripts/promote-to-admin.ts",
+    "reset-password": "tsx -r dotenv/config scripts/reset-password.ts"
   },
   "keywords": [],
   "author": "",

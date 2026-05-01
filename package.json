@@ -13,7 +13,8 @@
     "start:api": "npm run start -w api",
     "deploy:api": "npm run build -w api && npm run db:migrate:prod -w api",
     "preview:web": "npm run preview -w web",
-    "promote-to-admin": "npm run promote-to-admin -w api --"
+    "promote-to-admin": "npm run promote-to-admin -w api --",
+    "reset-password": "npm run reset-password -w api --"
   },
   "engines": {
     "node": "24.x"
